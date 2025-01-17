@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class MovementTracker : TrackerBase
+public class MovementTracker : GVSReporterBase
 {
     // Variables for tracking head movement
     public Transform headTransform;
@@ -18,6 +18,7 @@ public class MovementTracker : TrackerBase
     private int batchSize = 1000;
 
     private event Action<List<string>> OnTracked;
+    private event Action<Vector3, AccelerationTypes> OnAccelerate;
 
     private void Start()
     {
@@ -34,7 +35,7 @@ public class MovementTracker : TrackerBase
             Track();
             if (data.Count > batchSize) // +1 for the fileName
             {
-                Trigger();
+                TriggerStringListeners();
             }
         }
     }
@@ -46,7 +47,7 @@ public class MovementTracker : TrackerBase
         headMovementSpeed = currentHeadVelocity.magnitude;
         // Calculate acceleration (change in velocity)
         headAcceleration = (currentHeadVelocity - previousHeadVelocity) / Mathf.Max(Time.deltaTime, 0.0001f);
-
+        OnAccelerate?.Invoke(headAcceleration);
         string line = $"{Time.time:F4},{headMovementSpeed:F4},{headAcceleration.magnitude:F4}";
         data.Add(line);
 
@@ -59,7 +60,7 @@ public class MovementTracker : TrackerBase
         // Ensure any remaining data is saved
         if (data.Count > 1) 
         {
-            Trigger();
+            TriggerStringListeners();
         }
         isRecording = false;
     }
@@ -79,17 +80,32 @@ public class MovementTracker : TrackerBase
         Debug.Log("Subscribing...");
         OnTracked += subscriber;
     }
-
     public override void Unsubscribe(Action<List<string>> subscriber)
     {
         OnTracked -= subscriber;
     }
 
-    public override void Trigger()
+    public override void TriggerStringListeners()
     {
-        Debug.Log("Trigger...");
+        Debug.Log("TriggerListeners...");
         OnTracked?.Invoke(new List<string>(data));
         data = new List<string>();
         data.Add(fileName);
+    }
+
+    public override void Subscribe(Action<Vector3, AccelerationTypes> subscriber)
+    {
+        OnAccelerate += subscriber;
+    }
+
+    public override void Unsubscribe(Action<Vector3, AccelerationTypes> subscriber)
+    {
+        OnAccelerate -= subscriber;
+    }
+
+    public override void TriggerVectorListeners(AccelerationTypes type)
+    {
+        Debug.Log("TriggerVectorListeners...");
+        OnAccelerate?.Invoke(headAcceleration, type);
     }
 }

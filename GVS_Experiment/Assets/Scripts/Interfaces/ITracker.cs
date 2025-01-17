@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 public interface ITracker
 {
@@ -10,5 +11,5 @@ public interface ITracker
 
     void Subscribe(Action<List<string>> subscriber);
     void Unsubscribe(Action<List<string>> subscriber);
-    void Trigger();
+    void TriggerStringListeners();
 }
