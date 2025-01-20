@@ -49,7 +49,7 @@ public class AngularMovementTracker : GVSReporterBase
     // Track angular movement
     public override void Track()
     {
-        currentRotation = headTransform.rotation;
+        currentRotation = headTransform.localRotation;
         currentAngularVelocity = CalculateAngularVelocity(previousRotation, currentRotation, Time.deltaTime);
         angularSpeed = currentAngularVelocity.magnitude;
 
@@ -129,7 +129,7 @@ public class AngularMovementTracker : GVSReporterBase
         Quaternion deltaRotation = current * Quaternion.Inverse(previous);
         deltaRotation.ToAngleAxis(out float angle, out Vector3 axis);
 
-        if (angle > 180f) angle -= 360f; // Normalize angle to [-180, 180]
-        return axis * (angle * Mathf.Deg2Rad / deltaTime); // Angular velocity in radians per second
+        if (angle > 180f) angle -= 360f;
+        return axis * (angle * Mathf.Deg2Rad / deltaTime);
     }
 }
