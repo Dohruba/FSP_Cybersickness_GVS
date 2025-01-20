@@ -17,7 +17,7 @@ public class MovementTracker : GVSReporterBase
     private bool isRecording;
     private List<string> data;
     private string fileName = "HeadMovement";
-    private string fileHeaders = "id,s,m/s,m/s^2";
+    private string fileHeaders = "id,s,m/s,m/s^2,x,z,y";
     private int batchSize = 1000;
     private AccelerationTypes accType = AccelerationTypes.Linear;
     private string id;
@@ -60,13 +60,15 @@ public class MovementTracker : GVSReporterBase
         currentHeadVelocity = SmoothVelocity(currentHeadVelocity);
 
         headMovementSpeed = currentHeadVelocity.magnitude;
+
         // Calculate acceleration (change in velocity)
         headAcceleration = (currentHeadVelocity - previousHeadVelocity) / Mathf.Max(Time.deltaTime, 0.0001f);
-        accelerationValue = (currentHeadVelocity.magnitude - previousHeadVelocity.magnitude) / Mathf.Max(Time.deltaTime, 0.0001f);
-        accelerationValue = ApplyLowPassFilter(accelerationValue);
+        Vector3 localAcceleration = headTransform.InverseTransformDirection(headAcceleration);
+        accelerationValue = ApplyLowPassFilter(localAcceleration.magnitude);
 
-        OnAccelerate?.Invoke(headAcceleration, accType);
-        string line = $"{id},{Time.time:F4},{headMovementSpeed:F4},{accelerationValue:F4}";
+        OnAccelerate?.Invoke(localAcceleration, accType);
+        string line = $"{id},{Time.time:F4},{headMovementSpeed:F4},{accelerationValue:F4}," +
+                $"{localAcceleration.x:F4},{localAcceleration.z:F4},{localAcceleration.y:F4}";
         data.Add(line);
 
         previousHeadPosition = currentHeadPosition;

@@ -28,14 +28,15 @@ public class ExperimentManager : MonoBehaviour
     private void Update()
     {
         // Start and stop experiment using keyboard keys for testing purposes
-        if (Input.GetKeyDown(KeyCode.S))
+        if (Input.GetKeyDown(KeyCode.O))
         {
             StartExperiment();
         }
 
-        if (Input.GetKeyDown(KeyCode.E))
+        if (Input.GetKeyDown(KeyCode.P))
         {
             StopExperiment();
+            guid = GenerateShortUUID();
         }
     }
     public void StartExperiment()

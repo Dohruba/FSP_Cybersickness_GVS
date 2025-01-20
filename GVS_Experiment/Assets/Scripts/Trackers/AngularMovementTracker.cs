@@ -15,7 +15,7 @@ public class AngularMovementTracker : GVSReporterBase
     private bool isRecording;
     private List<string> data;
     private string fileName = "AngularMovement";
-    private string fileHeaders = "id,s,deg/s,deg/s^2";
+    private string fileHeaders = "id,s,deg/s,deg/s^2,x,y,z";
     private int batchSize = 1000;
     private AccelerationTypes accType = AccelerationTypes.Angular;
     private string id;
@@ -57,7 +57,8 @@ public class AngularMovementTracker : GVSReporterBase
 
         OnAccelerate?.Invoke(angularAcceleration, accType);
 
-        string line = $"{id}{Time.time:F4},{angularSpeed:F4},{angularAcceleration.magnitude:F4}";
+        string line = $"{id},{Time.time:F4},{angularSpeed:F4},{angularAcceleration.magnitude:F4}" +
+                  $",{angularAcceleration.x:F4},{angularAcceleration.y:F4},{angularAcceleration.z:F4}";
         data.Add(line);
 
         previousRotation = currentRotation;
