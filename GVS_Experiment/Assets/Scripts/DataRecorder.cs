@@ -7,9 +7,6 @@ public class DataRecorder : MonoBehaviour
 {
     [SerializeField]
     private TrackerBase[] trackers;
-    [SerializeField]
-
-
     private string filePath;
 
     private void Awake()
@@ -40,7 +37,6 @@ public class DataRecorder : MonoBehaviour
         // Check if headers are already written to the file
         EnsureHeadersExist(path, data[1]);
         EnsureHeadersExist(uniquePath, data[1]);
-        Debug.Log(data.Count);
         int startIndex = 2;
 
         string content = string.Join("\n", data.GetRange(startIndex, data.Count - startIndex)) + "\n";

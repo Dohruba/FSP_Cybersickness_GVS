@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
-public class AngularMovementTracker : GVSReporterBase
+public class AngularMovementTracker : TrackerBase
 {
     // Variables for tracking angular movement
     public Transform headTransform;
@@ -11,18 +13,22 @@ public class AngularMovementTracker : GVSReporterBase
     private Vector3 previousAngularVelocity;
     private Vector3 currentAngularVelocity;
     private Vector3 angularAcceleration;
+    private Vector3 smoothedAngularAcceleration;
     private float angularSpeed;
     private bool isRecording;
     private List<string> data;
     private string fileName = "AngularMovement";
     private string fileHeaders = "id,s,deg/s,deg/s^2,x,y,z";
     private int batchSize = 1000;
-    private AccelerationTypes accType = AccelerationTypes.Angular;
     private string id;
+    public float maxSpeed = 6;
+    public float maxAcc = 60;
 
+    // Moving average filter variables
+    private List<Vector3> accelerationHistory = new List<Vector3>();
+    public int smoothingWindow = 30; // Adjust this value for stronger or weaker smoothing
 
     private event Action<List<string>> OnTracked;
-    private event Action<Vector3, AccelerationTypes> OnAccelerate;
 
     private void Start()
     {
@@ -52,13 +58,14 @@ public class AngularMovementTracker : GVSReporterBase
         currentRotation = headTransform.localRotation;
         currentAngularVelocity = CalculateAngularVelocity(previousRotation, currentRotation, Time.deltaTime);
         angularSpeed = currentAngularVelocity.magnitude;
-
+        if(angularSpeed > maxSpeed) return; // Block excessively big values
         angularAcceleration = (currentAngularVelocity - previousAngularVelocity) / Mathf.Max(Time.deltaTime, 0.0001f);
+        // Apply moving average filter to angular acceleration
+        smoothedAngularAcceleration = SmoothWithMovingAverage(angularAcceleration);
+        if(Mathf.Abs(smoothedAngularAcceleration.y) > maxAcc) return;
 
-        OnAccelerate?.Invoke(angularAcceleration, accType);
-
-        string line = $"{id},{Time.time:F4},{angularSpeed:F4},{angularAcceleration.magnitude:F4}" +
-                  $",{angularAcceleration.x:F4},{angularAcceleration.y:F4},{angularAcceleration.z:F4}";
+        string line = $"{id},{Time.time:F4},{angularSpeed:F4},{smoothedAngularAcceleration.magnitude:F4}" +
+                  $",{smoothedAngularAcceleration.x:F4},{smoothedAngularAcceleration.y:F4},{smoothedAngularAcceleration.z:F4}";
         data.Add(line);
 
         previousRotation = currentRotation;
@@ -105,22 +112,6 @@ public class AngularMovementTracker : GVSReporterBase
         data.Add(fileHeaders);
     }
 
-    public override void Subscribe(Action<Vector3, AccelerationTypes> subscriber)
-    {
-        OnAccelerate += subscriber;
-    }
-
-    public override void Unsubscribe(Action<Vector3, AccelerationTypes> subscriber)
-    {
-        OnAccelerate -= subscriber;
-    }
-
-    public override void TriggerVectorListeners(AccelerationTypes type)
-    {
-        Debug.Log("TriggerVectorListeners...");
-        OnAccelerate?.Invoke(angularAcceleration, type);
-    }
-
     // Calculate angular velocity
     private Vector3 CalculateAngularVelocity(Quaternion previous, Quaternion current, float deltaTime)
     {
@@ -131,5 +122,26 @@ public class AngularMovementTracker : GVSReporterBase
 
         if (angle > 180f) angle -= 360f;
         return axis * (angle * Mathf.Deg2Rad / deltaTime);
+    }
+
+    // Moving average filter for angular acceleration
+    private Vector3 SmoothWithMovingAverage(Vector3 currentAcceleration)
+    {
+        accelerationHistory.Add(currentAcceleration);
+
+        // Maintain the history size
+        if (accelerationHistory.Count > smoothingWindow)
+        {
+            accelerationHistory.RemoveAt(0);
+        }
+
+        // Calculate the moving average
+        Vector3 smoothedAcceleration = Vector3.zero;
+        foreach (Vector3 acceleration in accelerationHistory)
+        {
+            smoothedAcceleration += acceleration;
+        }
+
+        return smoothedAcceleration / accelerationHistory.Count;
     }
 }

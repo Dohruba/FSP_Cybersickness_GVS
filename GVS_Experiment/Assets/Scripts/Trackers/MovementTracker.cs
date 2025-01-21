@@ -13,11 +13,9 @@ public class MovementTracker : GVSReporterBase
     public InputAction leftJoystickAction;
     private Vector3 previousHeadPosition;
     private Vector3 currentHeadPosition;
-    private Vector3 currentHeadVelocity;
     private Vector3 previousHeadVelocity;
     private Vector3 headAcceleration;
     private float accelerationValue;
-    private float headMovementSpeed;
     private bool isRecording;
     private List<string> data;
     private string fileName = "HeadMovement";
@@ -25,13 +23,23 @@ public class MovementTracker : GVSReporterBase
     private int batchSize = 1000;
     private AccelerationTypes accType = AccelerationTypes.Linear;
     private string id;
+    private float clamp = 20;
 
     // Smoothing parameters
     private List<Vector3> velocityHistory = new List<Vector3>();
     private int smoothingWindow = 5;
-    private float accelerationFilter = 0.1f;
-    private float filteredAcceleration = 0f;
     private float maxSpeed;
+
+    private float filteredAccelerationX = 0f;
+    private float filteredAccelerationY = 0f;
+    private float filteredAccelerationZ = 0f;
+    private float[] previousFilteredValuesX; // Array to hold previous filtered values
+    private float[] previousFilteredValuesY; // Array to hold previous filtered values
+    private float[] previousFilteredValuesZ; // Array to hold previous filtered values
+    public int filterOrder = 5; // Number of previous values to consider (make it larger for more aggressiveness)
+    public float accelerationFilter = 0.9f; // Filter smoothing factor, between 0 and 1
+    private int currentIndex = 0; // Keeps track of the index to overwrite
+
 
     private event Action<List<string>> OnTracked;
     private event Action<Vector3, AccelerationTypes> OnAccelerate;
@@ -45,6 +53,13 @@ public class MovementTracker : GVSReporterBase
         data.Add(fileName);
         data.Add(fileHeaders);
         maxSpeed = xrRig.GetComponentInChildren<DynamicMoveProvider>().moveSpeed;
+
+        previousFilteredValuesX = new float[filterOrder];
+        previousFilteredValuesY = new float[filterOrder];
+        previousFilteredValuesZ = new float[filterOrder];
+        Array.Fill(previousFilteredValuesX, 0f); // Initialize to 0
+        Array.Fill(previousFilteredValuesY, 0f); // Initialize to 0
+        Array.Fill(previousFilteredValuesZ, 0f); // Initialize to 0
     }
     void OnEnable()
     {
@@ -75,17 +90,14 @@ public class MovementTracker : GVSReporterBase
         Vector3 inputAcceleration = (smoothedVelocity - previousHeadVelocity) / Mathf.Max(Time.deltaTime, 0.0001f);
         currentHeadPosition = xrRig.transform.position;
         float yAcceleration = (currentHeadPosition.y - previousHeadPosition.y) / Mathf.Max(Time.deltaTime, 0.0001f);
-        Vector3 finalAcceleration = new Vector3(inputAcceleration.x, yAcceleration, inputAcceleration.z);
+        Vector3 finalAcceleration = new Vector3(
+            CSVFilterUtility.ClampValue(inputAcceleration.x, -clamp, clamp), 
+            CSVFilterUtility.ClampValue(yAcceleration, -clamp, clamp), 
+            CSVFilterUtility.ClampValue(inputAcceleration.z, -clamp, clamp)
+            );
+        finalAcceleration = ApplyAggressiveLowPassFilter(finalAcceleration);
 
-        accelerationValue = ApplyLowPassFilter(finalAcceleration.magnitude);
-        if (Mathf.Abs(finalAcceleration.x) > Mathf.Abs(finalAcceleration.z))
-        {
-            Debug.Log("Side move");
-        }
-        else
-        {
-            Debug.Log("Front move");
-        }
+        accelerationValue = finalAcceleration.magnitude;
         // Log the acceleration
         OnAccelerate?.Invoke(finalAcceleration, accType);
         string line = $"{id},{Time.time:F4},{smoothedVelocity.magnitude:F4},{accelerationValue:F4}," +
@@ -96,12 +108,66 @@ public class MovementTracker : GVSReporterBase
         previousHeadPosition = currentHeadPosition;
         previousHeadVelocity = smoothedVelocity;
     }
+    // Function to smooth velocity using a moving average
+    private Vector3 SmoothVelocity(Vector3 currentVelocity)
+    {
+        velocityHistory.Add(currentVelocity);
+        if (velocityHistory.Count > smoothingWindow)
+        {
+            velocityHistory.RemoveAt(0);
+        }
+        return velocityHistory.Aggregate(Vector3.zero, (sum, v) => sum + v) / velocityHistory.Count;
+    }
+    public Vector3 ApplyAggressiveLowPassFilter(Vector3 rawAcceleration)
+    {
+        // Calculate the weighted sum of previous filtered values
+        float weightedSumX = 0f;
+        float weightedSumY = 0f;
+        float weightedSumZ = 0f;
+        float weightSumX = 0f;
+        float weightSumY = 0f;
+        float weightSumZ = 0f;
+
+        // Add previous filtered values with exponentially decreasing weights
+        for (int i = 0; i < filterOrder; i++)
+        {
+            float weight = Mathf.Pow(accelerationFilter, i); // Exponentially decaying weight
+            weightedSumX += previousFilteredValuesX[i] * weight;
+            weightedSumY += previousFilteredValuesY[i] * weight;
+            weightedSumZ += previousFilteredValuesZ[i] * weight;
+            weightSumX += weight;
+            weightSumY += weight;
+            weightSumZ += weight;
+        }
+
+        // Add the current raw value with the smallest weight
+        weightedSumX += rawAcceleration.x * Mathf.Pow(accelerationFilter, filterOrder);
+        weightedSumY += rawAcceleration.y * Mathf.Pow(accelerationFilter, filterOrder);
+        weightedSumZ += rawAcceleration.z * Mathf.Pow(accelerationFilter, filterOrder);
+        weightSumX += Mathf.Pow(accelerationFilter, filterOrder);
+        weightSumY += Mathf.Pow(accelerationFilter, filterOrder);
+        weightSumZ += Mathf.Pow(accelerationFilter, filterOrder);
+
+        // Calculate the new filtered value
+        float filteredAccelerationX = weightedSumX / weightSumX;
+        float filteredAccelerationY = weightedSumY / weightSumY;
+        float filteredAccelerationZ = weightedSumZ / weightSumZ;
+
+        // Update the array with the new filtered value
+        previousFilteredValuesX[currentIndex] = filteredAccelerationX;
+        previousFilteredValuesY[currentIndex] = filteredAccelerationY;
+        previousFilteredValuesZ[currentIndex] = filteredAccelerationZ;
+        currentIndex = (currentIndex + 1) % filterOrder; // Circular buffer behavior
+
+        return new Vector3(filteredAccelerationX, filteredAccelerationY, filteredAccelerationZ);
+    }
+
 
 
 
     public override void StopRecording()
     {
-        if (data.Count > 1) 
+        if (data.Count > 1)
         {
             TriggerStringListeners();
         }
@@ -152,22 +218,7 @@ public class MovementTracker : GVSReporterBase
         Debug.Log("TriggerVectorListeners...");
         OnAccelerate?.Invoke(headAcceleration, type);
     }
-    // Function to smooth velocity using a moving average
-    private Vector3 SmoothVelocity(Vector3 currentVelocity)
-    {
-        velocityHistory.Add(currentVelocity);
-        if (velocityHistory.Count > smoothingWindow)
-        {
-            velocityHistory.RemoveAt(0);
-        }
-        return velocityHistory.Aggregate(Vector3.zero, (sum, v) => sum + v) / velocityHistory.Count;
-    }
 
-    // Function to apply low-pass filter to acceleration
-    private float ApplyLowPassFilter(float rawAcceleration)
-    {
-        filteredAcceleration = (1 - accelerationFilter) * filteredAcceleration + accelerationFilter * rawAcceleration;
-        return filteredAcceleration;
-    }
+
 
 }
