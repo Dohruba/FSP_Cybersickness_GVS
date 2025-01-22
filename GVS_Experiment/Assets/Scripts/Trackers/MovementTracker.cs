@@ -39,7 +39,8 @@ public class MovementTracker : GVSReporterBase
     public int filterOrder = 5; // Number of previous values to consider (make it larger for more aggressiveness)
     public float accelerationFilter = 0.9f; // Filter smoothing factor, between 0 and 1
     private int currentIndex = 0; // Keeps track of the index to overwrite
-
+    private Vector3 filteredAcceleration;
+    private float previousVelocityY;
 
     private event Action<List<string>> OnTracked;
     private event Action<Vector3, AccelerationTypes> OnAccelerate;
@@ -81,33 +82,68 @@ public class MovementTracker : GVSReporterBase
     // Track head linear movement
     public override void Track()
     {
-        Vector2 input = leftJoystickAction.ReadValue<Vector2>();
-        float inputX = input.x;
-        float inputZ = input.y;
-
-        Vector3 inputVelocity = new Vector3(inputX, 0, inputZ) * maxSpeed;
+        Vector3 inputVelocity = CalculateInputVelocity();
         Vector3 smoothedVelocity = SmoothVelocity(inputVelocity);
-        Vector3 inputAcceleration = (smoothedVelocity - previousHeadVelocity) / Mathf.Max(Time.deltaTime, 0.0001f);
-        currentHeadPosition = xrRig.transform.position;
-        float yAcceleration = (currentHeadPosition.y - previousHeadPosition.y) / Mathf.Max(Time.deltaTime, 0.0001f);
-        Vector3 finalAcceleration = new Vector3(
-            CSVFilterUtility.ClampValue(inputAcceleration.x, -clamp, clamp), 
-            CSVFilterUtility.ClampValue(yAcceleration, -clamp, clamp), 
-            CSVFilterUtility.ClampValue(inputAcceleration.z, -clamp, clamp)
-            );
-        finalAcceleration = ApplyAggressiveLowPassFilter(finalAcceleration);
 
+        Vector3 inputAcceleration = CalculateHorizontalAcceleration(inputVelocity);
+        float yAcceleration = CalculateVerticalAcceleration();
+
+        Vector3 gvsAcceleration = new Vector3(inputAcceleration.x, yAcceleration, inputAcceleration.z);
+        OnAccelerate?.Invoke(ApplyLowPassFilter(gvsAcceleration), accType);
+        Vector3 finalAcceleration = gvsAcceleration;
+            //FilterAndClampAcceleration(gvsAcceleration);
+
+        // Log acceleration data
+        LogAccelerationData(smoothedVelocity, finalAcceleration);
+
+        // Update previous state for the next frame
+        UpdatePreviousState(smoothedVelocity);
+    }
+
+    private Vector3 CalculateInputVelocity()
+    {
+        Vector2 input = leftJoystickAction.ReadValue<Vector2>();
+        return new Vector3(input.x, 0, input.y) * maxSpeed;
+    }
+
+    private Vector3 CalculateHorizontalAcceleration(Vector3 smoothedVelocity)
+    {
+        return (smoothedVelocity - previousHeadVelocity) / Mathf.Max(Time.deltaTime, 0.0001f);
+    }
+
+    private float CalculateVerticalAcceleration()
+    {
+        currentHeadPosition = xrRig.transform.position;
+        float currentVelocityY = (currentHeadPosition.y - previousHeadPosition.y) / Mathf.Max(Time.deltaTime, 0.0001f);
+        float yAcceleration = (currentVelocityY - previousVelocityY) / Mathf.Max(Time.deltaTime, 0.0001f);
+        previousVelocityY = currentVelocityY;
+        return yAcceleration;
+    }
+
+    private Vector3 FilterAndClampAcceleration(Vector3 acceleration)
+    {
+        Vector3 finalAcceleration = new Vector3(
+            CSVFilterUtility.ClampValue(acceleration.x, -clamp, clamp),
+            CSVFilterUtility.ClampValue(acceleration.y, -clamp, clamp),
+            CSVFilterUtility.ClampValue(acceleration.z, -clamp, clamp)
+        );
+        return ApplyAggressiveLowPassFilter(finalAcceleration);
+    }
+
+    private void LogAccelerationData(Vector3 smoothedVelocity, Vector3 finalAcceleration)
+    {
         accelerationValue = finalAcceleration.magnitude;
-        // Log the acceleration
-        OnAccelerate?.Invoke(finalAcceleration, accType);
         string line = $"{id},{Time.time:F4},{smoothedVelocity.magnitude:F4},{accelerationValue:F4}," +
                       $"{finalAcceleration.x:F4},{finalAcceleration.y:F4},{finalAcceleration.z:F4}";
         data.Add(line);
+    }
 
-        // Update state for the next frame
+    private void UpdatePreviousState(Vector3 smoothedVelocity)
+    {
         previousHeadPosition = currentHeadPosition;
         previousHeadVelocity = smoothedVelocity;
     }
+
     // Function to smooth velocity using a moving average
     private Vector3 SmoothVelocity(Vector3 currentVelocity)
     {
@@ -162,8 +198,11 @@ public class MovementTracker : GVSReporterBase
         return new Vector3(filteredAccelerationX, filteredAccelerationY, filteredAccelerationZ);
     }
 
-
-
+    private Vector3 ApplyLowPassFilter(Vector3 rawAcceleration)
+    {
+        filteredAcceleration = (1 - accelerationFilter) * filteredAcceleration + accelerationFilter * rawAcceleration;
+        return filteredAcceleration;
+    }
 
     public override void StopRecording()
     {

@@ -37,6 +37,12 @@ public class SmoothRotation : MonoBehaviour, IGvsReporter
             XRRig.transform.Rotate(Vector3.up, rotationAmount);
         }
     }
+    public void TriggerVectorListeners(AccelerationTypes type)
+    {
+        Vector2 input = rightJoystickAction.ReadValue<Vector2>();
+        Vector3 data = new Vector3(0, input.x, 0);
+        OnTurn?.Invoke(data, type);
+    }
     private float ApplyEasing(float input)
     {
         return Mathf.Sign(input) * Mathf.Pow(Mathf.Abs(input), easingFactor);
@@ -50,13 +56,5 @@ public class SmoothRotation : MonoBehaviour, IGvsReporter
     public void Unsubscribe(Action<Vector3, AccelerationTypes> subscriber)
     {
         OnTurn -= subscriber;
-    }
-
-    public void TriggerVectorListeners(AccelerationTypes type)
-    {
-        //Debug.Log("TriggerVectorListeners...");
-        Vector2 input = rightJoystickAction.ReadValue<Vector2>();
-        Vector3 data = new Vector3(0,input.y,0);
-        OnTurn?.Invoke(data, type);
     }
 }

@@ -11,13 +11,8 @@ public class GVSCDataSender : MonoBehaviour
     public bool rotationIsSending;
     public bool accIsSending;
 
-    private void Awake()
-    {
-        SubscribeToTrackers();
-    }
     void Start()
     {
-        // Example of opening the serial port when the game starts
         UnitySerialPort.Instance.OpenSerialPort();
     }
 
@@ -25,8 +20,50 @@ public class GVSCDataSender : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Space))
         {
-            Debug.Log("Sending data");
+            Debug.Log("Pinging port");
             SendMessageToSerialPort("Hello from Unity!");
+        }
+    }
+    private void OnEnable()
+    {
+        SubscribeToTrackers();
+    }
+    private void OnDisable()
+    {
+        UnsubscribeFromTrackers();
+    }
+
+    private void HandleRotation(Vector3 vector, AccelerationTypes types)
+    {
+        if (!rotationIsSending || vector.y == 0) return;
+        SendValueToGVS(vector.y);
+    }
+
+    private void HandleAcceleration(Vector3 direction, AccelerationTypes type)
+    {
+        if (!accIsSending) return;
+        SendValueToGVS(direction);
+    }
+
+    void SendValueToGVS(float value)
+    {
+        string valueString = value.ToString();
+        SendMessageToSerialPort(valueString);
+    }
+    void SendValueToGVS(Vector3 value)
+    {
+        string valueString = value.ToString();
+        SendMessageToSerialPort(valueString);
+    }
+    void SendMessageToSerialPort(string message)
+    {
+        if (UnitySerialPort.Instance != null && UnitySerialPort.Instance.SerialPort.IsOpen)
+        {
+            UnitySerialPort.Instance.SendSerialDataAsLine(message);
+        }
+        else
+        {
+            Debug.LogWarning("Serial port is not open!");
         }
     }
 
@@ -41,41 +78,16 @@ public class GVSCDataSender : MonoBehaviour
         }
         rotator.Subscribe(HandleRotation);
     }
-
-    private void HandleRotation(Vector3 vector, AccelerationTypes types)
+    private void UnsubscribeFromTrackers()
     {
-        if (!rotationIsSending) return;
-        Debug.Log("Sending rotation data");
-        if (vector.y > 0)
+        foreach (var tracker in gvsInfluencers)
         {
-            Debug.Log("Rotating right");
-            SendMessageToSerialPort("Rotating right: " + vector.ToString());
+            if (tracker != null)
+            {
+                tracker.Unsubscribe(HandleAcceleration);
+            }
         }
-        else
-        {
-            Debug.Log("Rotating left");
-            SendMessageToSerialPort("Rotating left: " + vector.ToString());
-        }
-    }
-
-    private void HandleAcceleration(Vector3 direction, AccelerationTypes type)
-    {
-        if (!accIsSending) return;
-        Debug.Log("Sending lin acc data");
-        SendMessageToSerialPort("Acc Direction: " + direction.ToString());
-    }
-
-    void SendMessageToSerialPort(string message)
-    {
-        if (UnitySerialPort.Instance != null && UnitySerialPort.Instance.SerialPort.IsOpen)
-        {
-            UnitySerialPort.Instance.SendSerialDataAsLine(message);
-            Debug.Log("Data Sent: " + message);
-        }
-        else
-        {
-            Debug.LogWarning("Serial port is not open!");
-        }
+        rotator.Unsubscribe(HandleRotation);
     }
 
 }
