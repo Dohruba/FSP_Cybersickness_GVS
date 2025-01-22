@@ -889,7 +889,7 @@ public class UnitySerialPort : MonoBehaviour
         if (StatusMsgBox != null)
             StatusMsgBox.text = portStatus;
 
-        print(portStatus);
+        //print(portStatus);
     }
 
     #endregion Methods
