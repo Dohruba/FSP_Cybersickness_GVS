@@ -33,6 +33,8 @@ using System.Collections.Generic;
 
 // new Text Mesh Pro text
 using TMPro;
+using System.IO;
+using System.Linq;
 
 public class UnitySerialPort : MonoBehaviour
 {
@@ -86,8 +88,8 @@ public class UnitySerialPort : MonoBehaviour
 
     // Read and write timeouts
 
-    public int ReadTimeout = 10;
-    public int WriteTimeout = 10;
+    public int ReadTimeout = 50;
+    public int WriteTimeout = 50;
 
     // Property used to run/keep alive the serial thread loop
 
@@ -115,6 +117,7 @@ public class UnitySerialPort : MonoBehaviour
         get { return chunkData; }
         set { chunkData = value; }
     }
+    public bool IsPortInitalized = false;
 
     [Header("GUI Fields")]
 
@@ -125,6 +128,10 @@ public class UnitySerialPort : MonoBehaviour
     public TMP_Text ComStatusText;
     public TMP_Text RawDataText;
     public TMP_Text StatusMsgBox;
+
+    private byte[] LastMessage = new byte[256]; // Buffer for the last message
+    private int LastMessageLength = 0;
+
 
     // public TMP_InputField OutputString;
 
@@ -165,7 +172,7 @@ public class UnitySerialPort : MonoBehaviour
     [Header("Options")]
     [SerializeField]
     public LoopMethods LoopMethod =
-        LoopMethods.Coroutine;
+        LoopMethods.Threading;
 
     // If set to true then open the port when the start
     // event is called.
@@ -184,12 +191,12 @@ public class UnitySerialPort : MonoBehaviour
 
     [Header("Data Read")]    
 
-    public ReadMethod ReadDataMethod = 
-        ReadMethod.ReadLine;
+    public ReadMethod ReadDataMethod = ReadMethod.ReadHex;
     public enum ReadMethod
     {
         ReadLine,
-        ReadToChar
+        ReadToChar,
+        ReadHex
     }
 
     public string Delimiter;
@@ -235,22 +242,22 @@ public class UnitySerialPort : MonoBehaviour
         // Register for a notification of the open port event
 
         SerialPortOpenEvent +=
-            new SerialPortOpenEventHandler(UnitySerialPort_SerialPortOpenEvent);
+            new SerialPortOpenEventHandler(UnitySerialPortSerialPortOpenEvent);
 
         // Register for a notification of the close port event
 
         SerialPortCloseEvent +=
-            new SerialPortCloseEventHandler(UnitySerialPort_SerialPortCloseEvent);
+            new SerialPortCloseEventHandler(UnitySerialPortSerialPortCloseEvent);
 
         // Register for a notification of data sent
 
         SerialPortSentDataEvent +=
-            new SerialPortSentDataEventHandler(UnitySerialPort_SerialPortSentDataEvent);
+            new SerialPortSentDataEventHandler(UnitySerialPortSerialPortSentDataEvent);
 
         // Register for a notification of data sent
 
         SerialPortSentLineDataEvent +=
-            new SerialPortSentLineDataEventHandler(UnitySerialPort_SerialPortSentLineDataEvent);
+            new SerialPortSentLineDataEventHandler(UnitySerialPortSerialPortSentLineDataEvent);
 
         // Register for a notification of the SerialDataParseEvent
 
@@ -265,6 +272,7 @@ public class UnitySerialPort : MonoBehaviour
         // ensure that the port is valid etc. for this! 
 
         if (OpenPortOnStart) { OpenSerialPort(); }
+        else { Debug.Log("Waiting to open Port"); }
     }
 
     /// <summary>
@@ -281,16 +289,16 @@ public class UnitySerialPort : MonoBehaviour
             SerialDataParseEvent -= UnitySerialPort_SerialDataParseEvent;
 
         if (SerialPortOpenEvent != null)
-            SerialPortOpenEvent -= UnitySerialPort_SerialPortOpenEvent;
+            SerialPortOpenEvent -= UnitySerialPortSerialPortOpenEvent;
 
         if (SerialPortCloseEvent != null)
-            SerialPortCloseEvent -= UnitySerialPort_SerialPortCloseEvent;
+            SerialPortCloseEvent -= UnitySerialPortSerialPortCloseEvent;
 
         if (SerialPortSentDataEvent != null)
-            SerialPortSentDataEvent -= UnitySerialPort_SerialPortSentDataEvent;
+            SerialPortSentDataEvent -= UnitySerialPortSerialPortSentDataEvent;
 
         if (SerialPortSentLineDataEvent != null)
-            SerialPortSentLineDataEvent -= UnitySerialPort_SerialPortSentLineDataEvent;
+            SerialPortSentLineDataEvent -= UnitySerialPortSerialPortSentLineDataEvent;
     }
 
     /// <summary>
@@ -392,14 +400,14 @@ public class UnitySerialPort : MonoBehaviour
     void UnitySerialPort_SerialDataParseEvent(string[] Data, string RawData)
     {       
         // Not fired via portStatus to avoid hiding other messages from the GUI
-        if (ShowDebugs)
-            print("Data Recieved via port: " + RawData);
+        //if (ShowDebugs)
+            //print("Data Recieved via port: " + RawData);
     }
 
     /// <summary>
     /// Open serialport notification event
     /// </summary>
-    void UnitySerialPort_SerialPortOpenEvent()
+    void UnitySerialPortSerialPortOpenEvent()
     {
         portStatus = "The serialport:" + ComPort + " is now open!";
 
@@ -410,7 +418,7 @@ public class UnitySerialPort : MonoBehaviour
     /// <summary>
     /// Close serialport notification event
     /// </summary>
-    void UnitySerialPort_SerialPortCloseEvent()
+    void UnitySerialPortSerialPortCloseEvent()
     {
         portStatus = "The serialport:" + ComPort + " is now closed!";
 
@@ -422,7 +430,7 @@ public class UnitySerialPort : MonoBehaviour
     /// Send data serialport notification event
     /// </summary>
     /// <param name="Data">string</param>
-    void UnitySerialPort_SerialPortSentDataEvent(string Data)
+    void UnitySerialPortSerialPortSentDataEvent(string Data)
     {
         portStatus = "Sent data: " + Data;
 
@@ -434,7 +442,7 @@ public class UnitySerialPort : MonoBehaviour
     /// Send data with "\n" serialport notification event
     /// </summary>
     /// <param name="Data">string</param>
-    void UnitySerialPort_SerialPortSentLineDataEvent(string Data)
+    void UnitySerialPortSerialPortSentLineDataEvent(string Data)
     {
         portStatus = "Sent data as line: " + Data;
 
@@ -465,13 +473,11 @@ public class UnitySerialPort : MonoBehaviour
 
             // Open the serial port
             SerialPort.Open();
-
-            // Update the gui if applicable
-            if (Instance != null && Instance.ComStatusText != null)
-            { Instance.ComStatusText.text = "ComStatus: Open"; }
+            Debug.Log("Serial port opened successfully.");
 
             if (LoopMethod == LoopMethods.Coroutine)
             {
+                Debug.Log("Corutining... ");
                 if (isRunning)
                 {
                     // TCoroutine is already running so kill it!?
@@ -484,6 +490,7 @@ public class UnitySerialPort : MonoBehaviour
 
             if (LoopMethod == LoopMethods.Threading)
             {
+                Debug.Log("Threading... ");
                 if (isRunning)
                 {
                     // Thread is already running so kill it!?
@@ -498,11 +505,19 @@ public class UnitySerialPort : MonoBehaviour
 
             if (ShowDebugs)
                 ShowDebugMessages(portStatus);
+            IsPortInitalized = true;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            Console.WriteLine("Access to the serial port is denied.");
+        }
+        catch (IOException)
+        {
+            Console.WriteLine("Serial port does not exist or cannot be opened.");
         }
         catch (Exception ex)
         {
-            // Failed to open com port or start serial thread
-            Debug.Log("Error 1: " + ex.Message.ToString());
+            Console.WriteLine($"Could not open the serial port: {ex.Message}");
         }
 
         if (SerialPortOpenEvent != null)
@@ -565,13 +580,14 @@ public class UnitySerialPort : MonoBehaviour
     void StartSerialThread()
     {
         isRunning = true;
-
+        Debug.Log("Start serial thread...");
         SerialLoopThread = new Thread(SerialThreadLoop);
         SerialLoopThread.Start();
     }
 
     void SerialThreadLoop()
     {
+        Debug.Log("Serial Thread Loop...");
         while (isRunning)
         {
             if (isRunning == false)
@@ -643,6 +659,7 @@ public class UnitySerialPort : MonoBehaviour
     /// </summary>
     public IEnumerator SerialCoroutineLoop()
     {
+        Debug.Log("Starting serial corutine loop");
         while (isRunning)
         {
             GenericSerialLoop();
@@ -702,10 +719,18 @@ public class UnitySerialPort : MonoBehaviour
             // Check that the port is open. If not skip and do nothing
             if (SerialPort.IsOpen)
             {
-                // Read serial data until...
-
-                string rData = string.Empty;
-
+                string rData = null;
+                bool isDataIncoming = false;
+                if (SerialPort.BytesToRead > 0) // Check if there's data
+                {
+                    isDataIncoming = true;
+                }
+                else
+                {
+                    isDataIncoming = false;
+                }
+                //If there is no message, break
+                if (!isDataIncoming) return;
                 // swap between the ReadLine or ReadTo
                 switch (ReadDataMethod)
                 {
@@ -714,6 +739,9 @@ public class UnitySerialPort : MonoBehaviour
                         break;
                     case ReadMethod.ReadToChar:
                         rData = SerialPort.ReadTo(Delimiter);
+                        break;
+                    case ReadMethod.ReadHex:
+                        rData = ReadHex();
                         break;
                 }
 
@@ -724,11 +752,21 @@ public class UnitySerialPort : MonoBehaviour
                     RawData = rData;
                     // split the raw data into chunks via ',' and store it
                     // into a string array
-                    ChunkData = RawData.Split(Separator);
-
+                    if(!Separator.Equals('?'))
+                    {
+                        ChunkData = RawData.Split(Separator);
+                    }
+                    else
+                    {
+                        ChunkData = Enumerable.Range(0, RawData.Length/2)
+                            .Select(i => RawData.Substring(i*2,2))
+                            .ToArray();
+                    }
                     // Or you could call a function to do something with
                     // data e.g.
-                    ParseSerialData(ChunkData, RawData);
+                    //ParseSerialData(ChunkData, RawData);
+                    SerialDataParseEvent?.Invoke(ChunkData, RawData);
+                    RawData = null;
                 }
             }
         }
@@ -799,6 +837,22 @@ public class UnitySerialPort : MonoBehaviour
             SerialPortSentDataEvent(data);
     }
 
+    public void SendSerialData(byte[] data)
+    {
+        if (SerialPort != null)
+        { SerialPort.Write(data,0,data.Length); }
+
+        portStatus = "Sent data: " + data;
+
+        if (ShowDebugs)
+            ShowDebugMessages(portStatus);
+
+        // throw a sent data notification
+
+        if (SerialPortSentDataEvent != null)
+            SerialPortSentDataEvent(BitConverter.ToString(data));
+    }
+
     /// <summary>
     /// Function used to filter and act upon the data recieved. You can add
     /// bespoke functionality here.
@@ -807,7 +861,7 @@ public class UnitySerialPort : MonoBehaviour
     /// <param name="rawData">string of raw data</param>
     private void ParseSerialData(string[] data, string rawData)
     {
-
+        Debug.Log("Parsing...");
         // Fire a notification to all registered objects. Before we do
         // this however, first double check that we have some valid
         // data here so this only has to be performed once and not on
@@ -816,7 +870,10 @@ public class UnitySerialPort : MonoBehaviour
         if (data != null && rawData != string.Empty)
         {
             if (SerialDataParseEvent != null)
+            {
+                Debug.Log("Propagating event...");
                 SerialDataParseEvent(data, rawData);
+            }
         }
     }
 
@@ -887,10 +944,84 @@ public class UnitySerialPort : MonoBehaviour
     public void ShowDebugMessages(string portStatus)
     {
         if (StatusMsgBox != null)
-            StatusMsgBox.text = portStatus;
+            Debug.Log(portStatus);
 
         //print(portStatus);
     }
 
+
+    public string ReadHex()
+    {
+        // Ensure there are bytes to read
+        if (ReadDataMethod == ReadMethod.ReadHex)
+        {
+            // Step 1: Read the Message Head (1 byte)
+            byte[] messageHead = new byte[1];
+            SerialPort.Read(messageHead, 0, 1);
+            Debug.Log("Message Head: " + messageHead[0].ToString("X2"));
+            // Step 2: Check if the Message Head is 0xAA
+            if (messageHead[0].ToString("X2").ToLower() == "aa")
+            {
+                // Step 3: Read the Message Length (1 byte)
+                byte[] messageLength = new byte[1];
+                SerialPort.Read(messageLength, 0, 1);
+                string messageLengthHex = messageLength[0].ToString("X2");
+                LastMessageLength = Convert.ToInt32(messageLength[0].ToString(), 16);
+                // Step 4: Read the rest of the message (Length + 2 bytes)
+                int totalMessageLength = LastMessageLength + 2;
+                if (totalMessageLength <= LastMessage.Length)
+                {
+                    byte[] fullMessage = new byte[totalMessageLength];
+                    int bytesRead = SerialPort.Read(fullMessage, 0, totalMessageLength);
+
+                    // Copy to LastMessage buffer for later use
+                    Array.Copy(fullMessage, LastMessage, bytesRead);
+
+                    // Process the received message
+                    byte[] message = JoinByteArrays(messageHead, messageLength, fullMessage);
+                    ClearSerialBuffer(SerialPort);
+                    return BitConverter.ToString(message);
+                }
+                else
+                {
+                    Debug.LogWarning("Message exceeds buffer size!");
+                }
+            }
+            ClearSerialBuffer(SerialPort);
+            return "";
+        }
+        else
+        {
+            Debug.Log("_________________");
+            ClearSerialBuffer(SerialPort);
+            return "";
+        }
+    }
+
+    byte[] JoinByteArrays(params byte[][] arrays)
+    {
+        int totalLength = arrays.Sum(arr => arr.Length);
+        byte[] result = new byte[totalLength]; 
+        int offset = 0;
+
+        foreach (byte[] array in arrays)
+        {
+            Array.Copy(array, 0, result, offset, array.Length);
+            offset += array.Length;
+        }
+
+        return result;
+    }
+    private void ClearSerialBuffer(SerialPort serialPort)
+    {
+        if (serialPort != null && serialPort.IsOpen)
+        {
+            serialPort.DiscardInBuffer();
+        }
+        else
+        {
+            throw new InvalidOperationException("Serial port is not open or null.");
+        }
+    }
     #endregion Methods
 }
