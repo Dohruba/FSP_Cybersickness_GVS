@@ -5,6 +5,7 @@ using UnityEngine;
 using Newtonsoft.Json.Linq;
 using System.IO.Ports;
 using UnityEngine.Rendering;
+using System.Collections;
 
 public enum EGVSMode
 {
@@ -56,6 +57,10 @@ public class GVSCDataSender : MonoBehaviour
     private EGVSMode GVSmode = EGVSMode.BILATERAL_BIPOLAR;
     private bool isPortConnected = false;
     public bool isLine;
+    [SerializeField]
+    private float maxMiliAmpere = 2.54f;
+
+    private float timer = 1;
 
     void Start()
     {
@@ -87,7 +92,7 @@ public class GVSCDataSender : MonoBehaviour
         // Subscribe to the SerialDataParseEvent
         UnitySerialPort.SerialDataParseEvent += ParseMessage;
 
-
+        StartCoroutine(ZeroAllAfterTime());
     }
 
     private void OnSerialPortOpen()
@@ -189,17 +194,36 @@ public class GVSCDataSender : MonoBehaviour
     private void HandleRotation(Vector3 vector, AccelerationTypes types)
     {
         if (!rotationIsSending || vector.y == 0) return;
-        float currentInMa = vector.y * 2.54f;
-        currentInMa = Mathf.Clamp(currentInMa, -2.54f, 2.54f);
+        timer = 1;
+        float currentInMa = vector.y * maxMiliAmpere;
+        currentInMa = Mathf.Clamp(currentInMa, -maxMiliAmpere, maxMiliAmpere);
         TriggerGVSYaw(currentInMa);
     }
 
     private void HandleAcceleration(Vector3 direction, AccelerationTypes type)
     {
-        if (!accIsSending) return;
-        float currentInMa = direction.y * 2.54f;
-        currentInMa = Mathf.Clamp(currentInMa, -2.54f, 2.54f);
+        if (!accIsSending || direction == Vector3.zero) return;
+        timer = 1;
+        float currentInMa = direction.z * maxMiliAmpere;
+        currentInMa = Mathf.Clamp(currentInMa, -maxMiliAmpere, maxMiliAmpere);
+        Debug.Log("Clamped current: "+currentInMa);
         TriggerGVSLateral(currentInMa);
+    }
+
+    private IEnumerator ZeroAllAfterTime()
+    {
+        yield return new WaitUntil(() => isPortConnected);
+        while (true)
+        {
+            yield return new WaitForSecondsRealtime(0.1f);
+            timer -= 0.1f;
+            if(timer <= 0)
+            {
+                Debug.Log("Stopping all electrodes");
+                ZeroAllElectrodes();
+                timer = 1;
+            }
+        }
     }
     bool SendMessageToSerialPort(string message)
     {
@@ -508,7 +532,7 @@ public class GVSCDataSender : MonoBehaviour
     private bool SetElectrode(int nr, float CurrentInMilliampere)
     {
         if (nr <= 0 || nr >= 5) return false;
-        if(Mathf.Abs(CurrentInMilliampere) > 2.54f) return false;
+        if(Mathf.Abs(CurrentInMilliampere) > maxMiliAmpere) return false;
         //Convert mA in Bytes to send to device (see GoodVibrations GVS - Device Manual)
         int CurrentInByte = (int)((CurrentInMilliampere + 2.56f) /0.02f);
         int checkSum = (9 + nr + CurrentInByte) % 256;
