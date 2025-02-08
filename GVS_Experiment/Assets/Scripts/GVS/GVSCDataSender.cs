@@ -52,8 +52,9 @@ public class GVSCDataSender : MonoBehaviour
     private byte[] _lastMessage = new byte[20];
 
     // Device mode
+    [SerializeField]
     private EGVSMode GVSmode = EGVSMode.BILATERAL_BIPOLAR;
-    private bool deviceInitialized = false;
+    private bool isPortConnected = false;
     public bool isLine;
 
     void Start()
@@ -104,29 +105,51 @@ public class GVSCDataSender : MonoBehaviour
 
     void Update()
     {
+        //Open and close port
         if (Input.GetKeyDown(KeyCode.Space))
         {
-            OpenSerialPortToGVS();
+            ToggleSerialPortState();
         }
+        //Initalize
         if (Input.GetKeyUp(KeyCode.Alpha1))
         {
             InitalizeGVSDevice();
         }
         if (Input.GetKeyUp(KeyCode.Alpha2))
         {
-            SendMessageToSerialPort("2");
+            SetModeDirect();
         }
         if (Input.GetKeyUp(KeyCode.Alpha3))
         {
-            SendMessageToSerialPort("3");
+            Calibrate();
         }
         if (Input.GetKeyUp(KeyCode.Alpha4))
         {
-            SendMessageToSerialPort("4");
+            TriggerGVSLateral(2f);
         }
         if (Input.GetKeyUp(KeyCode.Alpha5))
         {
-            SendMessageToSerialPort("5");
+            TriggerGVSLateral(-2f);
+        }
+        if (Input.GetKeyUp(KeyCode.Alpha6))
+        {
+            TriggerGVSPitch(2f);
+        }
+        if (Input.GetKeyUp(KeyCode.Alpha7))
+        {
+            TriggerGVSRoll(2f);
+        }
+        if (Input.GetKeyUp(KeyCode.Alpha8))
+        {
+            TriggerGVSYaw(2f);
+        }
+        if (Input.GetKeyUp(KeyCode.Alpha9))
+        {
+            SetAllElectrodes(0, 0, 0, 0);
+        }
+        if (Input.GetKeyUp(KeyCode.Alpha0))
+        {
+            KillSwitch();
         }
     }
     private void OnEnable()
@@ -139,16 +162,22 @@ public class GVSCDataSender : MonoBehaviour
     }
 
     //GVS Setup
-    private void OpenSerialPortToGVS()
+    private void ToggleSerialPortState()
     {
-        if (!deviceInitialized)
+        if (!isPortConnected)
         {
             UnitySerialPort.Instance.OpenSerialPort();
+            isPortConnected = true;
+        }
+        else
+        {
+            UnitySerialPort.Instance.CloseSerialPort();
+            isPortConnected = false;
         }
     }
-    public bool IsDeviceInitalized()
+    public bool IsPortConnected()
     {
-        return deviceInitialized;
+        return isPortConnected;
     }
 
     //GVS Mode
@@ -160,24 +189,17 @@ public class GVSCDataSender : MonoBehaviour
     private void HandleRotation(Vector3 vector, AccelerationTypes types)
     {
         if (!rotationIsSending || vector.y == 0) return;
-        SendValueToGVS(vector.y);
+        float currentInMa = vector.y * 2.54f;
+        currentInMa = Mathf.Clamp(currentInMa, -2.54f, 2.54f);
+        TriggerGVSYaw(currentInMa);
     }
 
     private void HandleAcceleration(Vector3 direction, AccelerationTypes type)
     {
         if (!accIsSending) return;
-        SendValueToGVS(direction);
-    }
-
-    void SendValueToGVS(float value)
-    {
-        string valueString = value.ToString();
-        SendMessageToSerialPort(valueString);
-    }
-    void SendValueToGVS(Vector3 value)
-    {
-        string valueString = value.ToString();
-        SendMessageToSerialPort(valueString);
+        float currentInMa = direction.y * 2.54f;
+        currentInMa = Mathf.Clamp(currentInMa, -2.54f, 2.54f);
+        TriggerGVSLateral(currentInMa);
     }
     bool SendMessageToSerialPort(string message)
     {
@@ -470,6 +492,137 @@ public class GVSCDataSender : MonoBehaviour
     {
         byte[] InitCommandBytes = new byte[] { 0xAA, 0x01, 0x01, 0x01, 0x55 };
         return SendBytesToSerialPort(InitCommandBytes);
+    }
+    private bool SetModeDirect()
+    {
+        byte[] ModeCommandBytes = new byte[] { 0xAA, 0x01, 0x02, 0x02, 0x55 };
+        return SendBytesToSerialPort(ModeCommandBytes);
+    }
+
+    private bool DeselectModeDirect()
+    {
+        byte[] ModeCommandBytes = new byte[] { 0xAA, 0x01, 0x03, 0x03, 0x55 };
+        return SendBytesToSerialPort(ModeCommandBytes);
+    }
+
+    private bool SetElectrode(int nr, float CurrentInMilliampere)
+    {
+        if (nr <= 0 || nr >= 5) return false;
+        if(Mathf.Abs(CurrentInMilliampere) > 2.54f) return false;
+        //Convert mA in Bytes to send to device (see GoodVibrations GVS - Device Manual)
+        int CurrentInByte = (int)((CurrentInMilliampere + 2.56f) /0.02f);
+        int checkSum = (9 + nr + CurrentInByte) % 256;
+
+        byte[] SetElectrodeBytes = new byte[] { 0xAA, 0x03, 0x09, (byte)nr, (byte)CurrentInByte, (byte)checkSum, 0x55 };
+        return SendBytesToSerialPort(SetElectrodeBytes);
+    }
+    private bool SetAllElectrodes(float CurrentInMilliampereElectrode1, float CurrentInMilliampereElectrode2, float CurrentInMilliampereElectrode3, float CurrentInMilliampereElectrode4)
+    {
+        if (Mathf.Abs(CurrentInMilliampereElectrode1) > 2.54) return false;
+        if (Mathf.Abs(CurrentInMilliampereElectrode2) > 2.54) return false;
+        if (Mathf.Abs(CurrentInMilliampereElectrode3) > 2.54) return false;
+        if (Mathf.Abs(CurrentInMilliampereElectrode4) > 2.54) return false;
+        int CurrentInByte1 = (int)((CurrentInMilliampereElectrode1 + 2.56f) / 0.02f);
+        int CurrentInByte2 = (int)((CurrentInMilliampereElectrode2 + 2.56f) / 0.02f);
+        int CurrentInByte3 = (int)((CurrentInMilliampereElectrode3 + 2.56f) / 0.02f);
+        int CurrentInByte4 = (int)((CurrentInMilliampereElectrode4 + 2.56f) / 0.02f);
+
+        int checkSum = (10 + CurrentInByte1 + CurrentInByte2 + CurrentInByte3 + CurrentInByte4) % 256;
+
+        //Is checksum also sent? In the cpp code, only 0x0a is sent, but in the Vestibulator host, a checksum is recieved
+        byte[] SetAllBytes = new byte[] { 0xaa, 0x05, 0x0a, (byte)CurrentInByte1, (byte)CurrentInByte2, (byte)CurrentInByte3, (byte)CurrentInByte4, (byte)checkSum, 0x55 };
+        return SendBytesToSerialPort(SetAllBytes);
+    }
+    public bool Calibrate()
+    {
+        byte[] CalibrateBytes = new byte[] { 0xaa, 0x01, 0x1d, 0x1d, 0x55 };
+        return SendBytesToSerialPort(CalibrateBytes);
+    }
+    // Stops running scrips, zeros all electrodes
+    public bool KillSwitch()
+    {
+        byte[] StopBytes = new byte[] { 0xaa, 0x01, 0x14, 0x14, 0x55 };
+        return SendBytesToSerialPort(StopBytes);
+    }
+    public void ZeroAllElectrodes()
+    {
+        SetAllElectrodes(0, 0, 0, 0);
+    }
+
+    public void TriggerGVSLateral(float CurrentInmA)
+    {
+        if (!isPortConnected) return;
+        if(GVSmode == EGVSMode.BILATERAL_UNIPOLAR)
+        {
+            SetElectrode(1, CurrentInmA);
+            SetElectrode(2, CurrentInmA);
+        }
+    }
+    public void TriggerGVSRoll(float CurrentInmA)
+    {
+        if (!isPortConnected) return;
+
+        switch (GVSmode)
+        {
+            case EGVSMode.BILATERAL_BIPOLAR:
+                SetElectrode(1, CurrentInmA);
+                break;
+            case EGVSMode.ODAS:
+                SetElectrode(1, CurrentInmA / 2);
+                SetElectrode(2, -CurrentInmA / 2);
+                break;
+            case EGVSMode.OVR:
+                SetElectrode(4, CurrentInmA / 2);
+                SetElectrode(3, -CurrentInmA / 2);
+                break;
+            default:
+                break;
+        }
+    }
+
+    public void TriggerGVSPitch(float CurrentInmA)
+    {
+        if (!isPortConnected) return;
+
+        switch (GVSmode)
+        {
+            case EGVSMode.BILATERAL_BIPOLAR:
+                SetElectrode(1, CurrentInmA);
+                SetElectrode(2, CurrentInmA);
+                break;
+            case EGVSMode.ODAS:
+                SetElectrode(1, CurrentInmA / 2);
+                SetElectrode(2, CurrentInmA / 2);
+                SetElectrode(3, -CurrentInmA / 2);
+                SetElectrode(4, -CurrentInmA / 2);
+                break;
+            case EGVSMode.OVR:
+                SetElectrode(3, CurrentInmA / 2);
+                SetElectrode(2, -CurrentInmA / 2);
+                break;
+            default:
+                break;
+        }
+    }
+    public void TriggerGVSYaw(float CurrentInmA)
+    {
+        if (!isPortConnected) return;
+
+        switch (GVSmode)
+        {
+            case EGVSMode.ODAS:
+                SetElectrode(1, CurrentInmA / 2);
+                SetElectrode(2, -CurrentInmA / 2);
+                SetElectrode(3, CurrentInmA / 2);
+                SetElectrode(4, -CurrentInmA / 2);
+                break;
+            case EGVSMode.OVR:
+                SetElectrode(1, CurrentInmA / 2);
+                SetElectrode(3, -CurrentInmA / 2);
+                break;
+            default:
+                break;
+        }
     }
 
 }
