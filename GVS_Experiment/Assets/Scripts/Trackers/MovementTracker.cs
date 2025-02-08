@@ -83,13 +83,17 @@ public class MovementTracker : GVSReporterBase
     public override void Track()
     {
         Vector3 inputVelocity = CalculateInputVelocity();
+        Vector2 input = leftJoystickAction.ReadValue<Vector2>();
+        Vector3 forGVS = new Vector3(input.x, 0, input.y);
+        OnAccelerate?.Invoke(forGVS, accType);
         Vector3 smoothedVelocity = SmoothVelocity(inputVelocity);
 
         Vector3 inputAcceleration = CalculateHorizontalAcceleration(inputVelocity);
         float yAcceleration = CalculateVerticalAcceleration();
 
         Vector3 gvsAcceleration = new Vector3(inputAcceleration.x, yAcceleration, inputAcceleration.z);
-        OnAccelerate?.Invoke(ApplyLowPassFilter(gvsAcceleration), accType);
+        //OnAccelerate?.Invoke(ApplyLowPassFilter(gvsAcceleration), accType);
+        //OnAccelerate?.Invoke(gvsAcceleration, accType);
         Vector3 finalAcceleration = gvsAcceleration;
             //FilterAndClampAcceleration(gvsAcceleration);
 
@@ -103,7 +107,8 @@ public class MovementTracker : GVSReporterBase
     private Vector3 CalculateInputVelocity()
     {
         Vector2 input = leftJoystickAction.ReadValue<Vector2>();
-        return new Vector3(input.x, 0, input.y) * maxSpeed;
+        Vector3 velocity = new Vector3(input.x, 0, input.y) * maxSpeed;
+        return velocity;
     }
 
     private Vector3 CalculateHorizontalAcceleration(Vector3 smoothedVelocity)
