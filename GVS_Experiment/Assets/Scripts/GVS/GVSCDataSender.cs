@@ -6,6 +6,9 @@ using Newtonsoft.Json.Linq;
 using System.IO.Ports;
 using UnityEngine.Rendering;
 using System.Collections;
+using System.Collections.Generic;
+using System.Globalization;
+using Unity.IO.LowLevel.Unsafe;
 
 public enum EGVSMode
 {
@@ -51,6 +54,7 @@ public class GVSCDataSender : MonoBehaviour
     private int _bytesWrittenCount = 0;
     private int _bytesReadCount = 0;
     private byte[] _lastMessage = new byte[20];
+    private Queue<string> messageBuffer = new Queue<string>();
 
     // Device mode
     [SerializeField]
@@ -92,7 +96,7 @@ public class GVSCDataSender : MonoBehaviour
         // Subscribe to the SerialDataParseEvent
         UnitySerialPort.SerialDataParseEvent += ParseMessage;
 
-        StartCoroutine(ZeroAllAfterTime());
+        //StartCoroutine(ZeroAllAfterTime());
     }
 
     private void OnSerialPortOpen()
@@ -126,15 +130,15 @@ public class GVSCDataSender : MonoBehaviour
         }
         if (Input.GetKeyUp(KeyCode.Alpha3))
         {
-            Calibrate();
+            SetAllElectrodes(1.7f, -1.7f, 0, 0);
         }
         if (Input.GetKeyUp(KeyCode.Alpha4))
         {
-            TriggerGVSLateral(2f);
+            TriggerGVSLateral(1f);
         }
         if (Input.GetKeyUp(KeyCode.Alpha5))
         {
-            TriggerGVSLateral(-2f);
+            TriggerGVSLateral(-1f);
         }
         if (Input.GetKeyUp(KeyCode.Alpha6))
         {
@@ -284,34 +288,115 @@ public class GVSCDataSender : MonoBehaviour
 
     private void ParseMessage(string[] data, string rawData)
     {
-        // Process the data here
-        string head = data[0];
-        string length = data[1];
-        string body = "";
-        string tail = "";
-        for (int i = 2; i < data.Length - 2; i++)
+        foreach (string s in data)
         {
-            body += data[i];
-            body += " ";
+            messageBuffer.Enqueue(s);
         }
-        for (int i = data.Length - 2; i < data.Length; i++)
-        {
-            tail += data[i];
-            tail += " ";
-        }
-        Debug.Log("Received data from Serial Port: " + head + " " + length + " " + body + " " + tail);
-        string[] messageWithoutHead = body.Split(" ");
 
-        /*
-         1. Recieve message
-         2. Turn message to string
-            1. Check Message
-            2. Build string
-         3. Print
-         */
-        string message = GetMessageAsString(messageWithoutHead, Int32.Parse(length));
-        Debug.Log(message);
+        // Process the buffer to extract complete messages
+        ProcessBuffer();
     }
+
+    private void ProcessBuffer()
+    {
+        List<string> bufferList = new List<string>(messageBuffer);
+        if (bufferList.Count == 0)
+            return;
+
+        int startIndex = bufferList.IndexOf("AA");
+        if (startIndex == -1)
+        {
+            // No start marker found, clear the buffer
+            messageBuffer.Clear();
+            return;
+        }
+
+        // Remove any elements before the start of the message
+        while (startIndex > 0 && messageBuffer.Count > 0)
+        {
+            messageBuffer.Dequeue();
+            startIndex--;
+        }
+
+        // Look for the end marker "55" after the start
+        bufferList = new List<string>(messageBuffer);
+        int endIndex = -1;
+        for (int i = 1; i < bufferList.Count; i++) // Start from index 1 (after AA)
+        {
+            if (bufferList[i] == "55")
+            {
+                endIndex = i;
+                break;
+            }
+        }
+
+        if (endIndex == -1)
+        {
+            // No end marker found, wait for more data
+            return;
+        }
+
+        // Extract the message from AA to 55 (inclusive)
+        string[] messageData = new string[endIndex + 1];
+        for (int i = 0; i <= endIndex; i++)
+        {
+            messageData[i] = bufferList[i];
+        }
+
+        // Process the complete message
+        ProcessCompleteMessage(messageData);
+
+        // Remove the processed message from the buffer
+        for (int i = 0; i <= endIndex; i++)
+        {
+            if (messageBuffer.Count > 0)
+                messageBuffer.Dequeue();
+        }
+    }
+
+    private void ProcessCompleteMessage(string[] messageData)
+    {
+        if (messageData.Length < 4)
+        {
+            Debug.LogError("Invalid message: too short");
+            return;
+        }
+        for (int i = 0; i < messageData.Length; i++)
+            messageData[i] = messageData[i].ToLower();
+
+        string head = messageData[0]; //Must be AA
+        string lengthStr = messageData[1];
+        string body = "";
+
+        string checkedMessage = "";
+
+        for (int i = 2; i < messageData.Length - 2; i++)
+        {
+            body += messageData[i];
+            string partial = CheckMesage(messageData[i]);
+            checkedMessage += partial + "\n";
+            if (i < messageData.Length - 2)
+                body += " ";
+        }
+        Debug.Log("Message from GVS: " + checkedMessage);
+
+        string[] messageWithoutHead = body.Split(new[] { " " }, StringSplitOptions.RemoveEmptyEntries);
+
+        int length;
+        if (!int.TryParse(lengthStr, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out length))
+        {
+            Debug.LogError("Invalid length format: " + lengthStr);
+            return;
+        }
+
+        if (messageWithoutHead.Length > 1 && messageWithoutHead[1] == "09")
+        {
+            Debug.Log("Response from setting Electrodes ");
+            string message = GetMessageAsString(messageWithoutHead, length);
+            Debug.Log("Electrode message: " + message);
+        }
+    }
+
 
     private string GetMessageAsString(string[] messageWithoutHead, int length)
     {

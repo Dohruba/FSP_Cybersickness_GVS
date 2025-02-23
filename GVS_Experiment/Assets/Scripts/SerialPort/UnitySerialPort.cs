@@ -752,21 +752,13 @@ public class UnitySerialPort : MonoBehaviour
                     RawData = rData;
                     // split the raw data into chunks via ',' and store it
                     // into a string array
-                    if(!Separator.Equals('?'))
-                    {
-                        ChunkData = RawData.Split(Separator);
-                    }
-                    else
-                    {
-                        ChunkData = Enumerable.Range(0, RawData.Length/2)
-                            .Select(i => RawData.Substring(i*2,2))
-                            .ToArray();
-                    }
+                    ChunkData = RawData.Split(Separator);
                     // Or you could call a function to do something with
                     // data e.g.
                     //ParseSerialData(ChunkData, RawData);
                     SerialDataParseEvent?.Invoke(ChunkData, RawData);
                     RawData = null;
+                    ChunkData = null;
                 }
             }
         }
@@ -955,40 +947,16 @@ public class UnitySerialPort : MonoBehaviour
         // Ensure there are bytes to read
         if (ReadDataMethod == ReadMethod.ReadHex)
         {
-            // Step 1: Read the Message Head (1 byte)
-            byte[] messageHead = new byte[1];
-            SerialPort.Read(messageHead, 0, 1);
-            Debug.Log("Message Head: " + messageHead[0].ToString("X2"));
-            // Step 2: Check if the Message Head is 0xAA
-            if (messageHead[0].ToString("X2").ToLower() == "aa")
-            {
-                // Step 3: Read the Message Length (1 byte)
-                byte[] messageLength = new byte[1];
-                SerialPort.Read(messageLength, 0, 1);
-                string messageLengthHex = messageLength[0].ToString("X2");
-                LastMessageLength = Convert.ToInt32(messageLength[0].ToString(), 16);
-                // Step 4: Read the rest of the message (Length + 2 bytes)
-                int totalMessageLength = LastMessageLength + 2;
-                if (totalMessageLength <= LastMessage.Length)
-                {
-                    byte[] fullMessage = new byte[totalMessageLength];
-                    int bytesRead = SerialPort.Read(fullMessage, 0, totalMessageLength);
+            // Read all available bytes from the serial port
+            int bytesAvailable = SerialPort.BytesToRead;
+            if (bytesAvailable == 0)
+                return string.Empty;
 
-                    // Copy to LastMessage buffer for later use
-                    Array.Copy(fullMessage, LastMessage, bytesRead);
+            byte[] buffer = new byte[bytesAvailable];
+            int bytesRead = SerialPort.Read(buffer, 0, bytesAvailable);
 
-                    // Process the received message
-                    byte[] message = JoinByteArrays(messageHead, messageLength, fullMessage);
-                    ClearSerialBuffer(SerialPort);
-                    return BitConverter.ToString(message);
-                }
-                else
-                {
-                    Debug.LogWarning("Message exceeds buffer size!");
-                }
-            }
-            ClearSerialBuffer(SerialPort);
-            return "";
+            // Convert bytes to a hex string (format "AA-BB-CC")
+            return BitConverter.ToString(buffer, 0, bytesRead);
         }
         else
         {
