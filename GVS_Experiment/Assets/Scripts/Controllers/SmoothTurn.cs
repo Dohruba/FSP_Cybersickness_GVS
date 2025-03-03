@@ -28,7 +28,7 @@ public class SmoothRotation : MonoBehaviour, IGvsReporter
     void Update()
     {
         Vector2 rightJoystickInput = rightJoystickAction.ReadValue<Vector2>();
-        if(rightJoystickInput.x != 0)
+        //if(rightJoystickInput.x != 0)
             TriggerVectorListeners(type);
         float easedInputX = ApplyEasing(rightJoystickInput.x);
         if (easedInputX != 0)

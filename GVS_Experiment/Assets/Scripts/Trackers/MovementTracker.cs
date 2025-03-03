@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Windows;
 using UnityEngine.XR.Interaction.Toolkit.Samples.StarterAssets;
 
 public class MovementTracker : GVSReporterBase
@@ -78,14 +79,16 @@ public class MovementTracker : GVSReporterBase
                 TriggerStringListeners();
             }
         }
+
+        Vector2 input = leftJoystickAction.ReadValue<Vector2>();
+        Vector3 forGVS = new Vector3(input.x, 0, input.y);
+        TriggerVectorListeners(forGVS);
     }
     // Track head linear movement
     public override void Track()
     {
         Vector3 inputVelocity = CalculateInputVelocity();
         Vector2 input = leftJoystickAction.ReadValue<Vector2>();
-        Vector3 forGVS = new Vector3(input.x, 0, input.y);
-        OnAccelerate?.Invoke(forGVS, accType);
         Vector3 smoothedVelocity = SmoothVelocity(inputVelocity);
 
         Vector3 inputAcceleration = CalculateHorizontalAcceleration(inputVelocity);
@@ -259,8 +262,11 @@ public class MovementTracker : GVSReporterBase
 
     public override void TriggerVectorListeners(AccelerationTypes type)
     {
-        Debug.Log("TriggerVectorListeners...");
         OnAccelerate?.Invoke(headAcceleration, type);
+    }
+    public void TriggerVectorListeners(Vector3 acceleration)
+    {
+        OnAccelerate?.Invoke(acceleration, accType);
     }
 
 

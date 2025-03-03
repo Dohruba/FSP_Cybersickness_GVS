@@ -22,7 +22,7 @@ public enum EGVSMode
 public class GVSCDataSender : MonoBehaviour
 {
     [SerializeField]
-    private GVSReporterBase[] gvsInfluencers;
+    private MovementTracker[] gvsInfluencers;
     [SerializeField]
     private SmoothRotation rotator;
 
@@ -115,7 +115,7 @@ public class GVSCDataSender : MonoBehaviour
     void Update()
     {
         //Open and close port
-        if (Input.GetKeyDown(KeyCode.Space))
+        if (Input.GetKeyDown(KeyCode.Backspace))
         {
             ToggleSerialPortState();
         }
@@ -130,31 +130,32 @@ public class GVSCDataSender : MonoBehaviour
         }
         if (Input.GetKeyUp(KeyCode.Alpha3))
         {
-            SetAllElectrodes(1.7f, -1.7f, 0, 0);
+            TriggerGVSLateral(maxMiliAmpere);
         }
         if (Input.GetKeyUp(KeyCode.Alpha4))
         {
-            TriggerGVSLateral(1f);
+            TriggerGVSLateral(-maxMiliAmpere);
         }
         if (Input.GetKeyUp(KeyCode.Alpha5))
         {
-            TriggerGVSLateral(-1f);
+            TriggerGVSRoll(maxMiliAmpere);
         }
         if (Input.GetKeyUp(KeyCode.Alpha6))
         {
-            TriggerGVSPitch(2f);
+            TriggerGVSRoll(-maxMiliAmpere);
         }
         if (Input.GetKeyUp(KeyCode.Alpha7))
         {
-            TriggerGVSRoll(2f);
+            TriggerGVSYaw(maxMiliAmpere);
         }
         if (Input.GetKeyUp(KeyCode.Alpha8))
         {
-            TriggerGVSYaw(2f);
+            TriggerGVSYaw(-maxMiliAmpere);
         }
         if (Input.GetKeyUp(KeyCode.Alpha9))
         {
-            SetAllElectrodes(0, 0, 0, 0);
+            TriggerGVSYaw(0f);
+            ZeroAllElectrodes();
         }
         if (Input.GetKeyUp(KeyCode.Alpha0))
         {
@@ -195,23 +196,129 @@ public class GVSCDataSender : MonoBehaviour
         GVSmode = mode;
     }
 
+    private bool isRotating = false;
+    private bool rotatingLeft = false;
+    private bool rotatingRight = false;
+    private bool keepRotation = false;
     private void HandleRotation(Vector3 vector, AccelerationTypes types)
     {
-        if (!rotationIsSending || vector.y == 0) return;
-        timer = 1;
-        float currentInMa = vector.y * maxMiliAmpere;
-        currentInMa = Mathf.Clamp(currentInMa, -maxMiliAmpere, maxMiliAmpere);
-        TriggerGVSYaw(currentInMa);
+        //If not sending, but rotating is true, set all electrodes to 0 once
+        if (!rotationIsSending)
+        {
+            if (isRotating)
+            {
+                ZeroAllElectrodes();
+                isRotating = false;
+            }
+            return;
+        }
+        //Check if camera is rotating
+        if (vector.y == 0)
+        {
+            keepRotation = false;
+        }
+        if (vector.y != 0)
+        {
+            keepRotation = true;
+        }
+        // If rotating and direction changed, send signal
+        if(isRotating)
+        {
+            if (rotatingRight && vector.y > 0 ||
+                rotatingLeft && vector.y < 0) return; 
+            rotatingLeft = vector.y < 0;
+            rotatingRight = vector.y > 0;
+            timer = 1;
+            float currentInMa = vector.y * maxMiliAmpere;
+            currentInMa = Mathf.Clamp(currentInMa, -maxMiliAmpere, maxMiliAmpere);
+            //TriggerGVSYaw(currentInMa);
+            TriggerGVSYawAndLateral(lastLinear, currentInMa);
+        }
+        isRotating = keepRotation;
+
     }
 
+    private bool isAccelerating = false;
+    private bool acceleratingForward = false;
+    private bool acceleratingBackward = false;
+    private bool keepAcceleration = false;
     private void HandleAcceleration(Vector3 direction, AccelerationTypes type)
     {
-        if (!accIsSending || direction == Vector3.zero) return;
-        timer = 1;
-        float currentInMa = direction.z * maxMiliAmpere;
-        currentInMa = Mathf.Clamp(currentInMa, -maxMiliAmpere, maxMiliAmpere);
-        Debug.Log("Clamped current: "+currentInMa);
-        TriggerGVSLateral(currentInMa);
+        // If not sending, but accelerating is true, set all electrodes to 0 once
+        if (!accIsSending)
+        {
+            if (isAccelerating)
+            {
+                ZeroAllElectrodes();
+                isAccelerating = false;
+            }
+            return;
+        }
+
+        // Check if acceleration is active (non-zero direction)
+        if (direction.z == 0)
+        {
+            keepAcceleration = false;
+        }
+        else
+        {
+            keepAcceleration = true;
+        }
+
+        // If accelerating and direction changed, send signal
+        if (isAccelerating)
+        {
+            if ((acceleratingForward && direction.z > 0) ||
+                (acceleratingBackward && direction.z < 0))
+                return;
+
+            acceleratingForward = direction.z > 0;
+            acceleratingBackward = direction.z < 0;
+            timer = 1;
+            float currentInMa = direction.z * maxMiliAmpere;
+            currentInMa = Mathf.Clamp(currentInMa, -maxMiliAmpere, maxMiliAmpere);
+            //TriggerGVSLateral(currentInMa);
+            TriggerGVSYawAndLateral(currentInMa, lastAngular);
+        }
+
+        isAccelerating = keepAcceleration;
+    }
+
+    private float lastAngular, lastLinear = 0; 
+    private void TriggerGVSYawAndLateral(float currentAngular, float currentLinear)
+    {
+        //Yaw, electrodes 1-4, current/2
+        float yawCurrent = currentAngular / 2;
+        //Lateral, electrodes 1-2 current*1
+        float lateralCurrent = currentLinear;
+
+        float electrode1 = NormalizeValues(lateralCurrent + yawCurrent);
+        float electrode2 = NormalizeValues(lateralCurrent - yawCurrent);
+        float electrode3 = yawCurrent;
+        float electrode4 = yawCurrent * -1;
+
+        //If values were updated, resend a new signal
+        if (currentAngular != lastAngular || currentLinear != lastLinear)
+        {
+            lastAngular = currentAngular;
+            lastLinear = currentLinear;
+
+            SetElectrode(1, electrode1);
+            SetElectrode(2, electrode2);
+            SetElectrode(3, electrode3);
+            SetElectrode(4, electrode4);
+        }
+    }
+
+    public float NormalizeValues(float sum)
+    {
+        float absSum = Mathf.Abs(sum);
+        if (absSum > 2.54f)
+        {
+            float scaleFactor = 2.54f / absSum;
+            sum *= scaleFactor;
+        }
+        return sum;
     }
 
     private IEnumerator ZeroAllAfterTime()
@@ -265,13 +372,7 @@ public class GVSCDataSender : MonoBehaviour
 
     private void SubscribeToTrackers()
     {
-        foreach (var tracker in gvsInfluencers)
-        {
-            if (tracker != null)
-            {
-                tracker.Subscribe(HandleAcceleration);
-            }
-        }
+        gvsInfluencers[0].Subscribe(HandleAcceleration);
         rotator.Subscribe(HandleRotation);
     }
     private void UnsubscribeFromTrackers()
@@ -374,6 +475,10 @@ public class GVSCDataSender : MonoBehaviour
         {
             body += messageData[i];
             string partial = CheckMesage(messageData[i]);
+            if (partial.Equals("Unknown Message"))
+            {
+                partial += ": " + messageData[i];
+            }
             checkedMessage += partial + "\n";
             if (i < messageData.Length - 2)
                 body += " ";
@@ -389,12 +494,12 @@ public class GVSCDataSender : MonoBehaviour
             return;
         }
 
-        if (messageWithoutHead.Length > 1 && messageWithoutHead[1] == "09")
-        {
-            Debug.Log("Response from setting Electrodes ");
-            string message = GetMessageAsString(messageWithoutHead, length);
-            Debug.Log("Electrode message: " + message);
-        }
+        //if (messageWithoutHead.Length > 1)
+        //{
+        //    if (!messageWithoutHead[1].Equals("0A")) return;
+        //    Debug.Log("Response from setting Electrodes ");
+        //    //string message = GetMessageAsString(messageWithoutHead, length);
+        //}
     }
 
 
@@ -650,6 +755,7 @@ public class GVSCDataSender : MonoBehaviour
     // Stops running scrips, zeros all electrodes
     public bool KillSwitch()
     {
+        ZeroAllElectrodes();
         byte[] StopBytes = new byte[] { 0xaa, 0x01, 0x14, 0x14, 0x55 };
         return SendBytesToSerialPort(StopBytes);
     }
@@ -661,7 +767,7 @@ public class GVSCDataSender : MonoBehaviour
     public void TriggerGVSLateral(float CurrentInmA)
     {
         if (!isPortConnected) return;
-        if(GVSmode == EGVSMode.BILATERAL_UNIPOLAR)
+        if(GVSmode == EGVSMode.BILATERAL_UNIPOLAR || GVSmode == EGVSMode.ODAS)
         {
             SetElectrode(1, CurrentInmA);
             SetElectrode(2, CurrentInmA);
