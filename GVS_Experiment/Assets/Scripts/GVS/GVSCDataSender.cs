@@ -9,6 +9,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using Unity.IO.LowLevel.Unsafe;
+using Assets.Scripts.GVS;
 
 public enum EGVSMode
 {
@@ -25,6 +26,12 @@ public class GVSCDataSender : MonoBehaviour
     private MovementTracker[] gvsInfluencers;
     [SerializeField]
     private SmoothRotation rotator;
+    [SerializeField]
+    private bool isSham = false;
+    [SerializeField]
+    private bool isDirectional = false;
+    [SerializeField]
+    private bool isNoisy = false;
 
     public bool rotationIsSending;
     public bool accIsSending;
@@ -65,6 +72,8 @@ public class GVSCDataSender : MonoBehaviour
     private float maxMiliAmpere = 2.54f;
 
     private float timer = 1;
+
+    private NoisyGVS NoisyGVS = new NoisyGVS();
 
     void Start()
     {
@@ -114,6 +123,11 @@ public class GVSCDataSender : MonoBehaviour
 
     void Update()
     {
+        if (isNoisy)
+        {
+            //Send random signals softened
+            TriggerNoisyGVS();
+        }
         //Open and close port
         if (Input.GetKeyDown(KeyCode.Backspace))
         {
@@ -161,6 +175,10 @@ public class GVSCDataSender : MonoBehaviour
         {
             KillSwitch();
         }
+        if (Input.GetKeyUp(KeyCode.N))
+        {
+            SetupNoisyGVS();
+        }
     }
     private void OnEnable()
     {
@@ -202,6 +220,10 @@ public class GVSCDataSender : MonoBehaviour
     private bool keepRotation = false;
     private void HandleRotation(Vector3 vector, AccelerationTypes types)
     {
+        if (isSham || isNoisy)
+        {
+            return;
+        }
         //If not sending, but rotating is true, set all electrodes to 0 once
         if (!rotationIsSending)
         {
@@ -244,8 +266,12 @@ public class GVSCDataSender : MonoBehaviour
     private bool keepAcceleration = false;
     private void HandleAcceleration(Vector3 direction, AccelerationTypes type)
     {
-        // If not sending, but accelerating is true, set all electrodes to 0 once
-        if (!accIsSending)
+        if (isSham || isNoisy)
+        {
+            return;
+        }
+            // If not sending, but accelerating is true, set all electrodes to 0 once
+            if (!accIsSending)
         {
             if (isAccelerating)
             {
@@ -285,30 +311,6 @@ public class GVSCDataSender : MonoBehaviour
     }
 
     private float lastAngular, lastLinear = 0; 
-    private void TriggerGVSYawAndLateral(float currentAngular, float currentLinear)
-    {
-        //Yaw, electrodes 1-4, current/2
-        float yawCurrent = currentAngular / 2;
-        //Lateral, electrodes 1-2 current*1
-        float lateralCurrent = currentLinear;
-
-        float electrode1 = NormalizeValues(lateralCurrent + yawCurrent);
-        float electrode2 = NormalizeValues(lateralCurrent - yawCurrent);
-        float electrode3 = yawCurrent;
-        float electrode4 = yawCurrent * -1;
-
-        //If values were updated, resend a new signal
-        if (currentAngular != lastAngular || currentLinear != lastLinear)
-        {
-            lastAngular = currentAngular;
-            lastLinear = currentLinear;
-
-            SetElectrode(1, electrode1);
-            SetElectrode(2, electrode2);
-            SetElectrode(3, electrode3);
-            SetElectrode(4, electrode4);
-        }
-    }
 
     public float NormalizeValues(float sum)
     {
@@ -837,6 +839,50 @@ public class GVSCDataSender : MonoBehaviour
                 break;
             default:
                 break;
+        }
+    }
+
+    private void TriggerGVSYawAndLateral(float currentAngular, float currentLinear)
+    {
+        //Yaw, electrodes 1-4, current/2
+        float yawCurrent = currentAngular / 2;
+        //Lateral, electrodes 1-2 current*1
+        float lateralCurrent = currentLinear;
+
+        float electrode1 = NormalizeValues(lateralCurrent + yawCurrent);
+        float electrode2 = NormalizeValues(lateralCurrent - yawCurrent);
+        float electrode3 = yawCurrent;
+        float electrode4 = yawCurrent * -1;
+
+        //If values were updated, resend a new signal
+        if (currentAngular != lastAngular || currentLinear != lastLinear)
+        {
+            lastAngular = currentAngular;
+            lastLinear = currentLinear;
+
+            SetElectrode(1, electrode1);
+            SetElectrode(2, electrode2);
+            SetElectrode(3, electrode3);
+            SetElectrode(4, electrode4);
+        }
+    }
+
+    private void SetupNoisyGVS()
+    {
+        if (isNoisy)
+        {
+            NoisyGVS.SetMaxValue(maxMiliAmpere);
+        }
+    }
+    private void TriggerNoisyGVS()
+    {
+        if (isNoisy)
+        {
+            float[] values = NoisyGVS.GetNextCurrents();
+            SetElectrode(1, values[0]);
+            SetElectrode(2, values[1]);
+            SetElectrode(3, values[2]);
+            SetElectrode(4, values[3]);
         }
     }
 
