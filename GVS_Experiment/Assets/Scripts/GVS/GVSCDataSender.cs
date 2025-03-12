@@ -123,11 +123,6 @@ public class GVSCDataSender : MonoBehaviour
 
     void Update()
     {
-        if (isNoisy)
-        {
-            //Send random signals softened
-            TriggerNoisyGVS();
-        }
         //Open and close port
         if (Input.GetKeyDown(KeyCode.Backspace))
         {
@@ -872,6 +867,7 @@ public class GVSCDataSender : MonoBehaviour
         if (isNoisy)
         {
             NoisyGVS.SetMaxValue(maxMiliAmpere);
+            StartCoroutine(SendNoisySignal());
         }
     }
     private void TriggerNoisyGVS()
@@ -885,5 +881,12 @@ public class GVSCDataSender : MonoBehaviour
             SetElectrode(4, values[3]);
         }
     }
-
+    private IEnumerator SendNoisySignal()
+    {
+        while (isNoisy)
+        {
+            yield return new WaitForSecondsRealtime(0.05f);
+            TriggerNoisyGVS();
+        }
+    }
 }
