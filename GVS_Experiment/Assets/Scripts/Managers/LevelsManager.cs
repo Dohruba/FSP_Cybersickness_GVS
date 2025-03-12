@@ -65,10 +65,11 @@ public class LevelsManager : MonoBehaviour
 
     void EndLevel()
     {
-        Debug.Log($"Level {_currentLevelIndex + 1} Results:\n" +
+        string line = $"Level {_currentLevelIndex + 1} Results:\n" +
                 $"Coins Collected: {_coinsCollected}/{_totalCoinsInLevel}\n" +
-                $"Time Remaining: {Mathf.FloorToInt(_timeRemaining)}s");
-
+                $"Time Remaining: {Mathf.FloorToInt(_timeRemaining)}s\n";
+        Debug.Log(line);
+        DataRecorder.RecordLevelMetrics(line);
         StartNextLevel();
     }
     public static void CollectCoin()

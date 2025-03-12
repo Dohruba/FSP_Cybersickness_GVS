@@ -47,12 +47,19 @@ public class DataRecorder : MonoBehaviour
         Debug.Log($"Data recorded to {path}");
         Debug.Log($"Data recorded to {uniquePath}");
     }
+    public static void RecordLevelMetrics(string line)
+    {
+        string filePath = Application.persistentDataPath;
+        string uniquePath = Path.Combine(filePath, $"{ExperimentManager.GetGuid()}levels.csv");
+        File.AppendAllText(uniquePath, line);
+    }
     private void EnsureHeadersExist(string path, string headers)
     {
         if (!File.Exists(path))
         {
             // File doesn't exist, so create it with the headers
             File.WriteAllText(path, headers + "\n");
+
         }
         else
         {

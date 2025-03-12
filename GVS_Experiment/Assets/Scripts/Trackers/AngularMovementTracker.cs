@@ -15,7 +15,8 @@ public class AngularMovementTracker : TrackerBase
     private Vector3 angularAcceleration;
     private Vector3 smoothedAngularAcceleration;
     private float angularSpeed;
-    private bool isRecording;
+    [SerializeField]
+    private bool isRecording = false;
     private List<string> data;
     private string fileName = "AngularMovement";
     private string fileHeaders = "id,s,deg/s,deg/s^2,x,y,z";
