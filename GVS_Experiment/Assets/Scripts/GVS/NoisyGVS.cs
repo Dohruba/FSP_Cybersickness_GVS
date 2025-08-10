@@ -6,7 +6,7 @@ namespace Assets.Scripts.GVS
     public class NoisyGVS
     {
         private float[] valueMemory = {0,0,0,0};
-        private float increment = 0.001f;
+        private float increment = 0.01f;
         private float max = 0;
         public void SetMaxValue(float x)
         {
@@ -20,12 +20,12 @@ namespace Assets.Scripts.GVS
         public float[] GenerateRandomWalkValues()
         {
             float[] values = valueMemory;
-            float direction = Random.Range(-1, 2);
-            values[0] += direction * increment;
-            values[2] = -values[0];
-            values[1] += direction * increment;
-            values[3] = - values[1];
-
+            float direction = (Mathf.Sin(Time.time * Random.Range(0.9f, 1.1f) ) +1) * max /2;
+            values[0] = direction;
+            values[2] = -1 * values[0];
+            values[1] = direction;
+            values[3] = -1* values[1];
+            Debug.Log(values[0]);
             return values;
         }
     }

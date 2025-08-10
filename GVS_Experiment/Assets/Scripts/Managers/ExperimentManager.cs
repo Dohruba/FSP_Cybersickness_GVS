@@ -7,6 +7,8 @@ using Random = System.Random;
 public class ExperimentManager : MonoBehaviour
 {
     [SerializeField]
+    private string participantName = string.Empty;
+    [SerializeField]
     private TrackerBase[] trackers;
 
     [SerializeField]
@@ -77,14 +79,19 @@ public class ExperimentManager : MonoBehaviour
     {
         return guid.ToString();
     }
-    public static string GenerateShortUUID(int length = 5)
+    public string GenerateShortUUID(int length = 5)
     {
-        var sb = new StringBuilder(length);
-        for (int i = 0; i < length; i++)
+        if(participantName == string.Empty)
         {
-            sb.Append(Alphabet[random.Next(Alphabet.Length)]);
+            var sb = new StringBuilder(length);
+            for (int i = 0; i < length; i++)
+            {
+                sb.Append(Alphabet[random.Next(Alphabet.Length)]);
+            }
+            return sb.ToString();
+
         }
-        return sb.ToString();
+        return participantName + "_";
     }
 
 }

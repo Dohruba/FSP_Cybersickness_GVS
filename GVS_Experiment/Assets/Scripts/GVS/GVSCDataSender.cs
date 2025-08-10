@@ -124,9 +124,11 @@ public class GVSCDataSender : MonoBehaviour
     void Update()
     {
         //Open and close port
-        if (Input.GetKeyDown(KeyCode.Backspace))
+        if (Input.GetKeyDown(KeyCode.Backspace) || Input.GetKeyDown(KeyCode.C))
         {
+            Debug.Log("Starting");
             ToggleSerialPortState();
+            Debug.Log("Start");
         }
         //Initalize
         if (Input.GetKeyUp(KeyCode.Alpha1))
@@ -136,6 +138,8 @@ public class GVSCDataSender : MonoBehaviour
         if (Input.GetKeyUp(KeyCode.Alpha2))
         {
             SetModeDirect();
+            if(isNoisy)
+                SetupNoisyGVS();
         }
         if (Input.GetKeyUp(KeyCode.Alpha3))
         {
@@ -883,6 +887,7 @@ public class GVSCDataSender : MonoBehaviour
     }
     private IEnumerator SendNoisySignal()
     {
+        yield return new WaitUntil(() => (isPortConnected && accIsSending && rotationIsSending));
         while (isNoisy)
         {
             yield return new WaitForSecondsRealtime(0.05f);

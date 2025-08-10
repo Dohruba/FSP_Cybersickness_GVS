@@ -56,7 +56,7 @@ public class LevelsManager : MonoBehaviour
 
         _coinsCollected = 0;
         _totalCoinsInLevel = _currentLevel.GetComponentsInChildren<CoinController>(true).Length;
-        _timeRemaining = 60f;
+        _timeRemaining = 90f;
         if (_currentLevelIndex == 0) _timeRemaining = 1000;
 
         UIManager.Instance.UpdateCoinText(_coinsCollected);
