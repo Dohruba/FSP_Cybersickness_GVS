@@ -4,15 +4,15 @@ using UnityEngine;
 
 public abstract class TrackerBase : MonoBehaviour, ITracker
 {
-    public abstract bool IsRecording();
+    public abstract bool IsTracking();
 
-    public abstract void StartRecording();
+    public abstract void StartTracking();
 
-    public abstract void StopRecording();
+    public abstract void StopTracking();
 
-    public abstract void Subscribe(Action<List<string>> subscriber);
+    public abstract void Subscribe(Action<Vector3> subscriber);
 
-    public abstract void Unsubscribe(Action<List<string>> subscriber);
+    public abstract void Unsubscribe(Action<Vector3> subscriber);
 
     public abstract void Track();
 

@@ -1,30 +1,50 @@
 using System;
 using System.Text;
+using JetBrains.Annotations;
 using Unity.Mathematics;
 using UnityEngine;
 using Random = System.Random;
 
 public class ExperimentManager : MonoBehaviour
 {
+    [Header("Experiment Information")]
     [SerializeField]
-    private string participantName = string.Empty;
+    private string experimentId = string.Empty;
+    [SerializeField]
+    private string experimentDate = string.Empty;
+    [SerializeField]
+    private string experimentVersion = string.Empty;
+    private string identificator;
+    [SerializeField]
+    private bool experimentRunning;
+    [SerializeField]
+    private float startTime = 0f;
+    
+    [Header("Participant Information")]
+    [SerializeField]
+    private string gender = string.Empty;
+    [SerializeField]
+    private string age = string.Empty;
+    [SerializeField]
+    private string mssq = string.Empty;
+
+    [Header("Data processing")]
     [SerializeField]
     private TrackerBase[] trackers;
-
     [SerializeField]
     private DataRecorder dataRecorder;
 
-    [SerializeField]
-    private static string guid;
-
-    private bool experimentRunning;
-    private const string Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-    private static readonly Random random = new Random();
+    // Getters
+    public string Gender { get => gender; set => gender = value; }
+    public string Age { get => age; set => age = value; }
+    public string Mssq { get => mssq; set => mssq = value; }
+    public string Identificator { get => identificator; set => identificator = value; }
 
     private void Awake()
     {
-        guid = GenerateShortUUID();
-        Debug.Log(guid.ToString());
+        Identificator = GenerateFileName();
+        Debug.Log(Identificator.ToString());
+        gender = gender == "f" ? "0" : "1";
     }
 
     private void Update()
@@ -38,7 +58,7 @@ public class ExperimentManager : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.P))
         {
             StopExperiment();
-            guid = GenerateShortUUID();
+            Identificator = GenerateFileName();
         }
     }
     public void StartExperiment()
@@ -51,11 +71,13 @@ public class ExperimentManager : MonoBehaviour
 
         foreach (var tracker in trackers)
         {
-            tracker.StartRecording();
+            tracker.StartTracking();
         }
 
         experimentRunning = true;
         Debug.Log("Experiment started!");
+        startTime = Time.realtimeSinceStartup;
+        dataRecorder.StartRecording();
     }
 
     public void StopExperiment()
@@ -68,30 +90,22 @@ public class ExperimentManager : MonoBehaviour
 
         foreach (var tracker in trackers)
         {
-            tracker.StopRecording();
+            tracker.StopTracking();
         }
 
         experimentRunning = false;
         Debug.Log("Experiment stopped!");
+        dataRecorder.StopRecording();
     }
 
-    public static string GetGuid()
+    public string GenerateFileName()
     {
-        return guid.ToString();
+        return "V-" + experimentVersion + "_D-" + experimentDate + "_id-" + experimentId;
     }
-    public string GenerateShortUUID(int length = 5)
-    {
-        if(participantName == string.Empty)
-        {
-            var sb = new StringBuilder(length);
-            for (int i = 0; i < length; i++)
-            {
-                sb.Append(Alphabet[random.Next(Alphabet.Length)]);
-            }
-            return sb.ToString();
 
-        }
-        return participantName + "_";
+    public float GetExperimentTime()
+    {
+        return Time.realtimeSinceStartup - startTime;
     }
 
 }

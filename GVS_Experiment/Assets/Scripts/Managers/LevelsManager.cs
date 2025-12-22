@@ -15,6 +15,9 @@ public class LevelsManager : MonoBehaviour
     private int _totalCoinsInLevel;
     private int _initalTime = 60;
 
+    [SerializeField]
+    private DataRecorder _recorder;
+
 
     void Start()
     {
@@ -69,7 +72,7 @@ public class LevelsManager : MonoBehaviour
                 $"Coins Collected: {_coinsCollected}/{_totalCoinsInLevel}\n" +
                 $"Time Remaining: {Mathf.FloorToInt(_timeRemaining)}s\n";
         Debug.Log(line);
-        DataRecorder.RecordLevelMetrics(line);
+        _recorder.RecordLevelMetrics(line);
         StartNextLevel();
     }
     public static void CollectCoin()
