@@ -17,6 +17,7 @@ public class LevelsManager : MonoBehaviour
 
     [SerializeField]
     private DataRecorder _recorder;
+    [SerializeField] private ExperimentManager _experimentManager;
 
 
     void Start()
@@ -48,6 +49,7 @@ public class LevelsManager : MonoBehaviour
         playerRig.rotation = startingPoint.rotation;
         if (_currentLevelIndex >= levels.Count - 1)
         {
+            _experimentManager.StopExperiment();
             return;
         }
 
@@ -69,7 +71,7 @@ public class LevelsManager : MonoBehaviour
     {
         string line = $"{_currentLevelIndex + 1}," +
                 $"{_coinsCollected}/{_totalCoinsInLevel}," +
-                $"{Mathf.FloorToInt(_timeRemaining)}";
+                $"{Mathf.FloorToInt(_timeRemaining)}\n";
         _recorder.RecordLevelMetrics(line);
         StartNextLevel();
     }

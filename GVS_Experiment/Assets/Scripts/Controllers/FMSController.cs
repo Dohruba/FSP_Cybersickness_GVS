@@ -49,12 +49,14 @@ public class FMSController : MonoBehaviour
         {
             FMSTracker.DecreaseFMS();
         }
-        if (FMSTracker.GetCurrentFMS() >= 5 && gVSCDataSender.NoisyGVS.Interpolator < 1)
+        if (FMSTracker.GetCurrentFMS() >= triggerFms && gVSCDataSender.NoisyGVS.Interpolator < 1)
         {
+            Debug.Log("Increasing GVS");
             currentGvsStrength = gVSCDataSender.NoisyGVS.ActivateNoisyGVS(Time.deltaTime * speed);
         }
-        if (FMSTracker.GetCurrentFMS() < 5 && gVSCDataSender.NoisyGVS.Interpolator > 0)
+        if (FMSTracker.GetCurrentFMS() < triggerFms && gVSCDataSender.NoisyGVS.Interpolator > 0)
         {
+            Debug.Log("Decreasing GVS");
             currentGvsStrength = gVSCDataSender.NoisyGVS.DectivateNoisyGVS(Time.deltaTime * speed);
         }
 }

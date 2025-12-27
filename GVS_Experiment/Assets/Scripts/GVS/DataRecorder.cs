@@ -74,7 +74,7 @@ public class DataRecorder : MonoBehaviour
     public void RecordLevelMetrics(string line)
     {
         string filePath = Application.persistentDataPath;
-        string uniquePath = Path.Combine(filePath, $"{experimentManager.GenerateFileName()}levels.csv");
+        string uniquePath = Path.Combine(filePath, $"{experimentManager.GenerateFileName()}_levels.csv");
         File.AppendAllText(uniquePath, line);
     }
 

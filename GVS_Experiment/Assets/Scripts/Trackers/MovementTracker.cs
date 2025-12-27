@@ -45,6 +45,7 @@ public class MovementTracker : GVSReporterBase
         catch (Exception ex)
         {
             maxSpeed = 10;
+            Debug.LogError(ex);
         }
     }
 
@@ -57,6 +58,7 @@ public class MovementTracker : GVSReporterBase
         catch(Exception e) 
         {
             leftJoystickAction = testInputActions.FindActionMap("Keyboard").FindAction("Move");
+            Debug.LogError(e);
         }
         leftJoystickAction.Enable();
     }

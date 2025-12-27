@@ -3,6 +3,7 @@ using System.Text;
 using JetBrains.Annotations;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.XR.Interaction.Toolkit.Samples.StarterAssets;
 using Random = System.Random;
 
 public class ExperimentManager : MonoBehaviour
@@ -12,8 +13,6 @@ public class ExperimentManager : MonoBehaviour
     private string experimentId = string.Empty;
     [SerializeField]
     private string experimentDate = string.Empty;
-    [SerializeField]
-    private bool isGvsUserControlled = true;
     private string identificator;
     [SerializeField]
     private bool experimentRunning;
@@ -39,6 +38,8 @@ public class ExperimentManager : MonoBehaviour
     private DataRecorder dataRecorder;
 
     [Header("GVS Controller")]
+    [SerializeField]
+    private bool isGvsUserControlled = true;
     [SerializeField] 
     private GVSCDataSender GVSCDataSender;
     [SerializeField]
@@ -47,6 +48,26 @@ public class ExperimentManager : MonoBehaviour
     private bool isManual = true;
     [SerializeField]
     private bool logEvents = false;
+    [SerializeField]
+    private float gvsMiliAmpere = 0.0f;
+
+    [Header("Character controls")]
+    [SerializeField]
+    private float speed = 0.0f;
+    [SerializeField]
+    private float rotSpeed = 0.0f;
+    [SerializeField]
+    private DynamicMoveProvider dynamicMoveProvider;
+    [SerializeField]
+    private SmoothRotation smoothRotation;
+
+    [Header("FMS values")]
+    [SerializeField]
+    private float actualFMS = 0;
+    [SerializeField]
+    private float predictedFMS = 0;
+    [SerializeField]
+    private FMSTracker fmsTracker;
 
     // Getters
     public string Gender { get => gender; set => gender = value; }
@@ -56,37 +77,39 @@ public class ExperimentManager : MonoBehaviour
     public float PredictedFms { get => predictedFms; set => predictedFms = value; }
     public bool ExperimentRunning { get => experimentRunning; set => experimentRunning = value; }
     public bool IsGvsUserControlled { get => isGvsUserControlled; set => isGvsUserControlled = value; }
+    public bool IsManual { get => isManual; set => isManual = value; }
 
     private void Awake()
     {
         gender = gender == "f" ? "0" : "1";
         experimentDate = DateTime.Now.ToShortDateString().Replace('/','-');
+        experimentId = PlayModeExitHandler.GetCurrentExperimentID();
         Identificator = GenerateFileName();
         Debug.Log(Identificator.ToString());
     }
 
     private void Update()
     {
-        // Start and stop experiment using keyboard keys for testing purposes
-        if (Input.GetKeyDown(KeyCode.O))
-        {
-            StartExperiment();
-        }
-
         if (Input.GetKeyDown(KeyCode.P))
         {
             StopExperiment();
             Identificator = GenerateFileName();
         }
         GVSCDataSender.IsTesting = isTesting;
-        GVSCDataSender.IsManual = isManual;
+        GVSCDataSender.IsManual = IsManual;
         GVSCDataSender.LogEvents = logEvents;
+        GVSCDataSender.MaxMiliAmpere = gvsMiliAmpere < 2.5f ? gvsMiliAmpere : 2.5f;
+        dynamicMoveProvider.moveSpeed = speed;
+        smoothRotation.rotationSpeed = rotSpeed;
+        actualFMS = fmsTracker.UserFms;
+        predictedFms = fmsTracker.PredictedFms;
 
     }
     public void StartExperiment()
     {
         if (ExperimentRunning)
         {
+            experimentId = PlayModeExitHandler.GetCurrentExperimentID();
             Debug.LogWarning("Experiment is already running!");
             return;
         }

@@ -68,7 +68,7 @@ public class GVSCDataSender : MonoBehaviour
 
     //Message management
     private int _bytesWrittenCount = 0;
-    private int _bytesReadCount = 0;
+    //private int _bytesReadCount = 0;
     private byte[] _lastMessage = new byte[20];
     private Queue<string> messageBuffer = new Queue<string>();
 
@@ -119,7 +119,7 @@ public class GVSCDataSender : MonoBehaviour
         UnitySerialPort.SerialPortOpenEvent += OnSerialPortOpen;
         // Subscribe to the SerialDataParseEvent
         UnitySerialPort.SerialDataParseEvent += ParseMessage;
-
+        StartCoroutine(SetupCalibrationPhase());
     }
 
     private void OnSerialPortOpen()
@@ -134,29 +134,26 @@ public class GVSCDataSender : MonoBehaviour
         UnitySerialPort.SerialDataParseEvent -= ParseMessage;
     }
 
+    private IEnumerator SetupCalibrationPhase()
+    {
+        Debug.Log("Setting up calibration...\n");
+        ToggleSerialPortState();
+        yield return new WaitUntil(() => (isPortConnected));
+        InitalizeGVSDevice();
+        yield return new WaitForSecondsRealtime(0.5f);
+        SetModeDirect();
+        yield return new WaitForSecondsRealtime(0.5f);
+        SetupNoisyGVS();
+        Debug.Log("Calibration mode initalized...");
+        Debug.Log($"<color=red> Remember to set Age, Gender and MSSQ</color>");
+        Debug.Log($"<color=red> Remember to set Max Mili Ampere</color>");
+        Debug.Log($"<color=green> Starting Experiment: To start noisy signals, UNTICK MANUAL MODE</color>");
+        
+    }
+
 
     void Update()
     {
-        //Open and close port
-        if (Input.GetKeyDown(KeyCode.Backspace) || Input.GetKeyDown(KeyCode.C))
-        {
-            Debug.Log("Starting");
-            ToggleSerialPortState();
-            Debug.Log("Start");
-        }
-        //Initalize
-        if (Input.GetKeyUp(KeyCode.Alpha1))
-        {
-            InitalizeGVSDevice();
-        }
-        if (Input.GetKeyUp(KeyCode.Alpha2))
-        {
-            SetModeDirect();
-        }
-        if (Input.GetKeyUp(KeyCode.N))
-        {
-            SetupNoisyGVS();
-        }
         // Important selections
         // Zero all
         if (Input.GetKeyUp(KeyCode.Alpha9))
@@ -174,27 +171,27 @@ public class GVSCDataSender : MonoBehaviour
             // Test inputs
             if (Input.GetKeyUp(KeyCode.Alpha3))
             {
-                TriggerGVSLateral(maxMiliAmpere);
+                TriggerGVSLateral(MaxMiliAmpere);
             }
             if (Input.GetKeyUp(KeyCode.Alpha4))
             {
-                TriggerGVSLateral(-maxMiliAmpere);
+                TriggerGVSLateral(-MaxMiliAmpere);
             }
             if (Input.GetKeyUp(KeyCode.Alpha5))
             {
-                TriggerGVSRoll(maxMiliAmpere);
+                TriggerGVSRoll(MaxMiliAmpere);
             }
             if (Input.GetKeyUp(KeyCode.Alpha6))
             {
-                TriggerGVSRoll(-maxMiliAmpere);
+                TriggerGVSRoll(-MaxMiliAmpere);
             }
             if (Input.GetKeyUp(KeyCode.Alpha7))
             {
-                TriggerGVSYaw(maxMiliAmpere);
+                TriggerGVSYaw(MaxMiliAmpere);
             }
             if (Input.GetKeyUp(KeyCode.Alpha8))
             {
-                TriggerGVSYaw(-maxMiliAmpere);
+                TriggerGVSYaw(-MaxMiliAmpere);
             }
 
         }
@@ -270,8 +267,8 @@ public class GVSCDataSender : MonoBehaviour
             rotatingLeft = vector.y < 0;
             rotatingRight = vector.y > 0;
             timer = 1;
-            float currentInMa = vector.y * maxMiliAmpere;
-            currentInMa = Mathf.Clamp(currentInMa, -maxMiliAmpere, maxMiliAmpere);
+            float currentInMa = vector.y * MaxMiliAmpere;
+            currentInMa = Mathf.Clamp(currentInMa, -MaxMiliAmpere, MaxMiliAmpere);
             //TriggerGVSYaw(currentInMa);
             TriggerGVSYawAndLateral(lastLinear, currentInMa);
         }
@@ -320,8 +317,8 @@ public class GVSCDataSender : MonoBehaviour
             acceleratingForward = direction.z > 0;
             acceleratingBackward = direction.z < 0;
             timer = 1;
-            float currentInMa = direction.z * maxMiliAmpere;
-            currentInMa = Mathf.Clamp(currentInMa, -maxMiliAmpere, maxMiliAmpere);
+            float currentInMa = direction.z * MaxMiliAmpere;
+            currentInMa = Mathf.Clamp(currentInMa, -MaxMiliAmpere, MaxMiliAmpere);
             //TriggerGVSLateral(currentInMa);
             TriggerGVSYawAndLateral(currentInMa, lastAngular);
         }
@@ -335,6 +332,7 @@ public class GVSCDataSender : MonoBehaviour
     public bool IsManual { get => isManual; set => isManual = value; }
     public bool LogEvents { get => logEvents; set => logEvents = value; }
     public bool IsTesting { get => isTesting; set => isTesting = value; }
+    public float MaxMiliAmpere { get => maxMiliAmpere; set => maxMiliAmpere = value; }
 
     public float NormalizeValues(float sum)
     {
@@ -748,7 +746,7 @@ public class GVSCDataSender : MonoBehaviour
     private bool SetElectrode(int nr, float CurrentInMilliampere)
     {
         if (nr <= 0 || nr >= 5) return false;
-        if(Mathf.Abs(CurrentInMilliampere) > maxMiliAmpere) return false;
+        if(Mathf.Abs(CurrentInMilliampere) > MaxMiliAmpere) return false;
         //Convert mA in Bytes to send to device (see GoodVibrations GVS - Device Manual)
         int CurrentInByte = (int)((CurrentInMilliampere + 2.56f) /0.02f);
         int checkSum = (9 + nr + CurrentInByte) % 256;
@@ -895,7 +893,7 @@ public class GVSCDataSender : MonoBehaviour
     {
         if (isNoisy)
         {
-            NoisyGVS.SetMaxValue(maxMiliAmpere);
+            NoisyGVS.SetMaxValue(MaxMiliAmpere);
             StartCoroutine(SendNoisySignal());
         }
     }

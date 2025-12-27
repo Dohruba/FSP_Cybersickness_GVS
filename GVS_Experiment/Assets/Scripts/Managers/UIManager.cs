@@ -25,7 +25,7 @@ public class UIManager : MonoBehaviour
     public void UpdateCoinText(int count)
     {
         coinCount = count;
-        coinText.text = $" {count}";
+        coinText.text = $"{count}";
     }
     public void UpdateTimer(float timeRemaining)
     {

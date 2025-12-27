@@ -24,11 +24,13 @@ public class FMSTracker : MonoBehaviour
     private int upperLimit = 20;
     private int lowerLimit = 0;
 
+    public float PredictedFms { get => predictedFms; set => predictedFms = value; }
+    public int UserFms { get => userFms; set => userFms = value; }
 
     public float GetCurrentFMS()
     {
-        float userFmsFloat = userFms;
-        return experimentManager.IsGvsUserControlled ? userFmsFloat : predictedFms;
+        float userFmsFloat = UserFms;
+        return experimentManager.IsGvsUserControlled ? userFmsFloat : PredictedFms;
     }
     public void IncreaseFMS()
     {
@@ -41,16 +43,16 @@ public class FMSTracker : MonoBehaviour
 
     private void UpdateFMS(int change)
     {
-        if ((change > 0 && userFms < upperLimit) || (change < 0 && userFms > lowerLimit))
+        if ((change > 0 && UserFms < upperLimit) || (change < 0 && UserFms > lowerLimit))
         {
-            userFms += change;
+            UserFms += change;
             if(uiManager != null) 
-                uiManager.UpdateFMS(userFms);
+                uiManager.UpdateFMS(UserFms);
         }
     }
     private void Update()
     {
-        predictedFms = experimentCLientNoFMS.GetPredictedFMS();
+        PredictedFms = experimentCLientNoFMS.GetPredictedFMS();
     }
 
 }
