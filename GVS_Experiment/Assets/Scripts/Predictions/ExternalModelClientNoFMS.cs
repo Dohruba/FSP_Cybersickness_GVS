@@ -147,10 +147,10 @@ public class ExternalModelCLientNoFMS : MonoBehaviour
                 if (response.status == "success")
                 {
                     predictedFMS = response.prediction;
-                    Debug.Log("No-FMS model prediction: " + response.prediction.ToString("F2"));
-                    Debug.Log("Actual FMS: " + response.actual_fms.ToString("F2"));
-                    Debug.Log("Error: " + response.error.ToString("F2"));
-                    Debug.Log("Features used: " + response.features_used);
+                    //Debug.Log("No-FMS model prediction: " + response.prediction.ToString("F2"));
+                    //Debug.Log("Actual FMS: " + response.actual_fms.ToString("F2"));
+                    //Debug.Log("Error: " + response.error.ToString("F2"));
+                    //Debug.Log("Features used: " + response.features_used);
                 }
                 else
                 {

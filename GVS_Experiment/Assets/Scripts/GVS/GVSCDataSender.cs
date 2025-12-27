@@ -83,6 +83,7 @@ public class GVSCDataSender : MonoBehaviour
     private float timer = 1;
 
     private NoisyGVS noisyGVS = new NoisyGVS();
+    public float interpolatorValue = 0;
 
     private void Awake()
     {
@@ -154,6 +155,11 @@ public class GVSCDataSender : MonoBehaviour
 
     void Update()
     {
+        interpolatorValue = noisyGVS.Interpolator;
+        if (isNoisy)
+        {
+            NoisyGVS.SetMaxValue(MaxMiliAmpere);
+        }
         // Important selections
         // Zero all
         if (Input.GetKeyUp(KeyCode.Alpha9))
@@ -507,7 +513,7 @@ public class GVSCDataSender : MonoBehaviour
             if (i < messageData.Length - 2)
                 body += " ";
         }
-        if(LogEvents && !isNoisy) Debug.Log("Message from GVS: " + checkedMessage);
+        if(LogEvents) Debug.Log("Message from GVS: " + checkedMessage);
 
         string[] messageWithoutHead = body.Split(new[] { " " }, StringSplitOptions.RemoveEmptyEntries);
 

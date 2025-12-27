@@ -50,6 +50,8 @@ public class ExperimentManager : MonoBehaviour
     private bool logEvents = false;
     [SerializeField]
     private float gvsMiliAmpere = 0.0f;
+    [SerializeField]
+    private float interpolator = 0.0f;
 
     [Header("Character controls")]
     [SerializeField]
@@ -103,6 +105,7 @@ public class ExperimentManager : MonoBehaviour
         smoothRotation.rotationSpeed = rotSpeed;
         actualFMS = fmsTracker.UserFms;
         predictedFms = fmsTracker.PredictedFms;
+        interpolator = GVSCDataSender.interpolatorValue;
 
     }
     public void StartExperiment()
