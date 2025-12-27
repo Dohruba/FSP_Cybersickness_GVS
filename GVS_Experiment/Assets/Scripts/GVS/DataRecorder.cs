@@ -18,6 +18,8 @@ public class DataRecorder : MonoBehaviour
     [Header("Management")]
     [SerializeField]
     private ExperimentManager experimentManager;
+    [SerializeField]
+    private ExternalModelCLientNoFMS predictionsClient;
 
     [Header("Recording Settings")]
     [SerializeField]
@@ -27,8 +29,13 @@ public class DataRecorder : MonoBehaviour
     private string filePath;
     private Coroutine recordingCoroutine;
     private string currentEntry = "";
+    private List<string> buffer = new List<string>();
 
     public string CurrentEntry { get => currentEntry; private set => currentEntry = value; }
+    public string[] GetBuffer()
+    {
+        return buffer.ToArray();
+    }
 
     private void Awake()
     {
@@ -42,11 +49,26 @@ public class DataRecorder : MonoBehaviour
         data[10] = experimentManager.Age;
     }
 
-    public void RecordData(List<string> data)
+    public void RecordMovementFmsData(List<string> data)
     {
         string path = Path.Combine(filePath, $"{experimentManager.GenerateFileName()}.csv");
         CurrentEntry = GenerateEntry();
         File.AppendAllText(path, CurrentEntry);
+        buffer.Add(CurrentEntry);
+        if (buffer.Count > 10)
+            buffer.RemoveAt(0);
+        Debug.Log("Ttest");
+    }
+
+    public void RecordActualVsPredictedFMS()
+    {
+        string path = Path.Combine(filePath, $"{experimentManager.GenerateFileName()}_fms_measure_vs_prediction.csv");
+        string time = experimentManager.GetExperimentTime().ToString();
+        string currentFms = fms_Tracker.GetCurrentFMS().ToString();
+        string predictedFms = predictionsClient.GetPredictedFMS().ToString();
+        string entry = time + "," + currentFms + "," + predictedFms + "\n";
+        File.AppendAllText(path, entry);
+
     }
 
     public void RecordLevelMetrics(string line)
@@ -56,7 +78,6 @@ public class DataRecorder : MonoBehaviour
         File.AppendAllText(uniquePath, line);
     }
 
-    // Also record realfms vs predicted fms
     private string GenerateEntry()
     {
         Vector3 acceleration = movementTracker.GetLinearAcceleration();
@@ -74,7 +95,7 @@ public class DataRecorder : MonoBehaviour
         {
             line += item + ",";
         }
-        line = line.TrimEnd(','); // Remove trailing comma
+        line = line.TrimEnd(',');
         line += "\n";
         return line;
     }
@@ -99,9 +120,11 @@ public class DataRecorder : MonoBehaviour
 
     private IEnumerator RecordDataCoroutine()
     {
-        while (true)
+        while (experimentManager.ExperimentRunning)
         {
-            RecordData(null);
+            RecordMovementFmsData(buffer);
+            predictionsClient.PredictFromCSV(GetBuffer());
+            RecordActualVsPredictedFMS();
             yield return new WaitForSeconds(recordingInterval);
         }
     }

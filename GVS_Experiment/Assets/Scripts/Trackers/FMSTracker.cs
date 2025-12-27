@@ -34,7 +34,8 @@ public class FMSTracker : MonoBehaviour
         if ((change > 0 && fms < upperLimit) || (change < 0 && fms > lowerLimit))
         {
             fms += change;
-            uiManager.UpdateFMS(fms);
+            if(uiManager != null) 
+                uiManager.UpdateFMS(fms);
         }
     }
 

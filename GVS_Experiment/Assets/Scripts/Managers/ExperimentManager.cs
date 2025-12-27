@@ -19,6 +19,8 @@ public class ExperimentManager : MonoBehaviour
     private bool experimentRunning;
     [SerializeField]
     private float startTime = 0f;
+    [SerializeField]
+    private float predictedFms = 0;
     
     [Header("Participant Information")]
     [SerializeField]
@@ -39,6 +41,8 @@ public class ExperimentManager : MonoBehaviour
     public string Age { get => age; set => age = value; }
     public string Mssq { get => mssq; set => mssq = value; }
     public string Identificator { get => identificator; set => identificator = value; }
+    public float PredictedFms { get => predictedFms; set => predictedFms = value; }
+    public bool ExperimentRunning { get => experimentRunning; set => experimentRunning = value; }
 
     private void Awake()
     {
@@ -63,7 +67,7 @@ public class ExperimentManager : MonoBehaviour
     }
     public void StartExperiment()
     {
-        if (experimentRunning)
+        if (ExperimentRunning)
         {
             Debug.LogWarning("Experiment is already running!");
             return;
@@ -74,7 +78,7 @@ public class ExperimentManager : MonoBehaviour
             tracker.StartTracking();
         }
 
-        experimentRunning = true;
+        ExperimentRunning = true;
         Debug.Log("Experiment started!");
         startTime = Time.realtimeSinceStartup;
         dataRecorder.StartRecording();
@@ -82,7 +86,7 @@ public class ExperimentManager : MonoBehaviour
 
     public void StopExperiment()
     {
-        if (!experimentRunning)
+        if (!ExperimentRunning)
         {
             Debug.LogWarning("No experiment is running!");
             return;
@@ -93,7 +97,7 @@ public class ExperimentManager : MonoBehaviour
             tracker.StopTracking();
         }
 
-        experimentRunning = false;
+        ExperimentRunning = false;
         Debug.Log("Experiment stopped!");
         dataRecorder.StopRecording();
     }
@@ -107,5 +111,6 @@ public class ExperimentManager : MonoBehaviour
     {
         return Time.realtimeSinceStartup - startTime;
     }
+
 
 }

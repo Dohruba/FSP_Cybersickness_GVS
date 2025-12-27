@@ -660,6 +660,25 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1360023977 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3367569349717535537, guid: ff479574beacaf04b89814ae512373f4, type: 3}
+  m_PrefabInstance: {fileID: 7729188391297824065}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1360023979
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1360023977}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3836480f06a89ef4eb29d50adee96c12, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  uiManager: {fileID: 0}
+  fms: 0
 --- !u!1 &1406145682 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 5107289983990053083, guid: 6aebd32fbd9a1d9408314e27d7cdf391, type: 3}
@@ -676,6 +695,70 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5eff24dc8e255ed4d909630f21140f6f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1 &1596137674
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1596137676}
+  - component: {fileID: 1596137675}
+  m_Layer: 0
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1596137675
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1596137674}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d92e0208a3d2aa4fac1db59a83f4d6b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  FMSTracker: {fileID: 1360023979}
+  inputActions: {fileID: -944628639613478452, guid: c348712bda248c246b8c49b3db54643f, type: 3}
+  rightJoystickAction:
+    m_Name: Right Joystick
+    m_Type: 0
+    m_ExpectedControlType: 
+    m_Id: 8cb8ae1e-e056-4376-8c2f-21b0d8600ef2
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings: []
+    m_Flags: 0
+  leftJoystickAction:
+    m_Name: Left Joystick
+    m_Type: 0
+    m_ExpectedControlType: 
+    m_Id: 696ff201-f89e-4a75-9da4-ed5e9b5fa23b
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings: []
+    m_Flags: 0
+--- !u!4 &1596137676
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1596137674}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1596524514
 GameObject:
   m_ObjectHideFlags: 0
@@ -1288,6 +1371,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: MovementTracker
       objectReference: {fileID: 0}
+    - target: {fileID: 93120391748439749, guid: 63a2fe259147fad46a6c77b08b9a7acb, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7182150797192337596, guid: 63a2fe259147fad46a6c77b08b9a7acb, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -1580,6 +1667,10 @@ PrefabInstance:
     - target: {fileID: 3608293301606787694, guid: 0c343b41074621043a58618ed72249c4, type: 3}
       propertyPath: m_Name
       value: RotationTracker
+      objectReference: {fileID: 0}
+    - target: {fileID: 3608293301606787694, guid: 0c343b41074621043a58618ed72249c4, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5159538404497718416, guid: 0c343b41074621043a58618ed72249c4, type: 3}
       propertyPath: headTransform
@@ -2221,7 +2312,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 3367569349717535537, guid: ff479574beacaf04b89814ae512373f4, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1360023979}
   m_SourcePrefab: {fileID: 100100000, guid: ff479574beacaf04b89814ae512373f4, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
@@ -2254,3 +2348,4 @@ SceneRoots:
   - {fileID: 2783198749870588790}
   - {fileID: 820060204210895229}
   - {fileID: 271528005}
+  - {fileID: 1596137676}

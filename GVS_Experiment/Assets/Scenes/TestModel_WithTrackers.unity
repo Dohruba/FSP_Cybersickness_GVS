@@ -488,7 +488,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 658675834882647070, guid: 42276bb1616eea84bbf2c6e1ae81bc93, type: 3}
       propertyPath: experimentDate
-      value: 1234
+      value: 112
       objectReference: {fileID: 0}
     - target: {fileID: 658675834882647070, guid: 42276bb1616eea84bbf2c6e1ae81bc93, type: 3}
       propertyPath: experimentVersion
@@ -504,6 +504,10 @@ PrefabInstance:
       objectReference: {fileID: 1944849335}
     - target: {fileID: 658675834882647070, guid: 42276bb1616eea84bbf2c6e1ae81bc93, type: 3}
       propertyPath: 'trackers.Array.data[1]'
+      value: 
+      objectReference: {fileID: 916896509}
+    - target: {fileID: 658675834882647070, guid: 42276bb1616eea84bbf2c6e1ae81bc93, type: 3}
+      propertyPath: 'trackers.Array.data[2]'
       value: 
       objectReference: {fileID: 916896509}
     - target: {fileID: 1090443477530285586, guid: 42276bb1616eea84bbf2c6e1ae81bc93, type: 3}
@@ -941,7 +945,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 554658379042331514, guid: a1d45b148c38ab145820838fe8133130, type: 3}
       propertyPath: m_Name
-      value: Test06
+      value: PredictionsClient
       objectReference: {fileID: 0}
     - target: {fileID: 2668450980652726454, guid: a1d45b148c38ab145820838fe8133130, type: 3}
       propertyPath: manager
@@ -989,25 +993,31 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3789688279572333509, guid: a1d45b148c38ab145820838fe8133130, type: 3}
       propertyPath: fmsCsv
-      value: 5,5,5,5,5,5,5,5,5,5
+      value: 15.8950,15.9566,16.0181,16.0796,16.1411,16.2027,16.2642,16.3257,16.3872,16.4487
+      objectReference: {fileID: 0}
+    - target: {fileID: 3789688279572333509, guid: a1d45b148c38ab145820838fe8133130, type: 3}
+      propertyPath: m_Enabled
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3789688279572333509, guid: a1d45b148c38ab145820838fe8133130, type: 3}
       propertyPath: sampleCsv
-      value: '108.1793,5,-5.61799,0.009777732,5.627289,11.73015,-41.91182,11.03721,f,3.375,24
-        108.691,5,-9.081669,0.02829871,2.185342,5.577058,-56.32901,16.14308,f,3.375,24
-        109.2049,5,-3.879804,0.07780403,0.1120065,-0.04717476,-26.31864,1.207478,f,3.375,24
-        109.7052,5,-5.87922,-0.03680826,-2.263828,-0.3001462,-34.57735,0.923178,f,3.375,24
-        110.2194,5,-2.506938,0.03323623,-0.9877933,-0.9830505,-17.15042,1.483842,f,3.375,24
-        110.7334,5,4.2567,-0.01047886,2.654921,-0.7329878,26.53471,1.233323,f,3.375,24
-        111.2375,5,5.978638,0.09751331,0.9546538,-0.2415054,35.22834,0.9843226,f,3.375,24
-        111.7469,5,-4.95736,-0.2669139,-0.4228018,-2.137162,-30.79951,60.72147,f,3.375,24
-        112.2603,5,-5.689384,-0.01192442,-2.213277,-22.75296,-38.91403,55.87468,f,3.375,24
-        112.7745,5,4.836751,-0.04136363,3.052795,-28.12986,25.43237,53.93697,f,3.375,24 '
+      value: 81.1194,16,-0.8145891,0.05893796,-0.1557195,3.049461,-9.790128,-13.4629,f,38,32
+        81.62022,16,-0.5068139,-0.02891795,-0.1526373,4.095517,-7.313513,-13.08466,f,38,32
+        82.12032,16,-0.1383298,0.00275755,0.07631867,4.590851,-1.226258,-12.81146,f,38,32
+        82.62055,16,0.3589398,0.06618344,0.07631867,4.330485,5.609211,-12.89771,f,38,32
+        83.13409,16,0.5103849,0.03182491,0,3.46156,8.995106,-13.322,f,38,32 83.63426,16,0.7834677,0.08358645,0,2.31316,9.053957,-13.55786,f,38,32
+        84.13468,16,0.5986325,0.0216513,0.1526373,1.22728,8.911164,-13.71199,f,38,32
+        84.63524,17,0.509791,0.08418259,0,0.3661015,6.937141,-13.73212,f,38,32 85.13532,17,0.731594,0.05191058,0,0.3862911,9.762564,8.471022,f,38,32
+        85.64822,17,0.8225372,-0.04827307,-0.1540149,1.259536,12.51325,8.462258,f,38,32
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 3789688279572333509, guid: a1d45b148c38ab145820838fe8133130, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 554658379042331514, guid: a1d45b148c38ab145820838fe8133130, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1362843876}
   m_SourcePrefab: {fileID: 100100000, guid: a1d45b148c38ab145820838fe8133130, type: 3}
 --- !u!1001 &760606031
 PrefabInstance:
@@ -1069,6 +1079,10 @@ PrefabInstance:
       propertyPath: experimentManager
       value: 
       objectReference: {fileID: 243586969}
+    - target: {fileID: 6421253189462868085, guid: 17e6a68cd8b5e5b4abc22de31390f6e3, type: 3}
+      propertyPath: predictionsClient
+      value: 
+      objectReference: {fileID: 1362843876}
     - target: {fileID: 6421253189462868085, guid: 17e6a68cd8b5e5b4abc22de31390f6e3, type: 3}
       propertyPath: angularMovementTracker
       value: 
@@ -1515,6 +1529,39 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 15525341e588d664795b9d46d413b9ac, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1 &1362843871 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 554658379042331514, guid: a1d45b148c38ab145820838fe8133130, type: 3}
+  m_PrefabInstance: {fileID: 601401997}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1362843876
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1362843871}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f1d5d4fbc7eee0f45b6bd8c0c03baa6d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  serverUrl: http://127.0.0.1:5000
+  timeout: 5
+  sampleCsv: 128.0217,2,6.28442,-0.5464529,3.813072,0.07345404,-0.7517583,-0.1148859,m,1,30
+    128.5325,2,7.151882,0.3095139,1.220156,0.02096895,-0.689464,-0.1273131,m,1,30
+    129.0454,2,6.653585,-0.1466763,-0.536818,-0.07550683,-0.6197774,-0.4780543,m,1,30
+    129.5588,2,7.021938,-0.02941955,-3.330217,-0.2425563,-0.7959862,-0.4172271,m,1,30
+    130.0608,2,2.242512,-0.00650815,-3.156548,-0.3475039,-0.3537304,-0.312431,m,1,30
+    130.5724,2,-1.191339,0.05767275,0.9800172,-0.3538773,0.1802009,-0.2927056,m,1,30
+    131.0866,2,-5.581379,-0.1083969,4.270643,-0.2910178,0.6917637,-0.3872321,m,1,30
+    131.5897,2,-6.981491,0.1072425,1.830282,-0.1262353,0.7684639,-0.4690562,m,1,30
+    132.1011,2,-3.101148,0.02496969,0.3821537,0.02455978,0.3264316,-0.8659438,m,1,30
+    132.6145,2,-4.533265,0.04424898,-0.236694,0.1925474,0.4864902,-0.8394286,m,1,30
+  isTesting: 0
+  logRequests: 1
+  experimentManager: {fileID: 0}
+  predictedFMS: 0
 --- !u!1 &1534102343
 GameObject:
   m_ObjectHideFlags: 0
@@ -1909,8 +1956,8 @@ SceneRoots:
   - {fileID: 228900860}
   - {fileID: 225902062}
   - {fileID: 1944849334}
+  - {fileID: 916896508}
   - {fileID: 760606031}
   - {fileID: 243586968}
-  - {fileID: 916896508}
   - {fileID: 567605773}
   - {fileID: 601401997}

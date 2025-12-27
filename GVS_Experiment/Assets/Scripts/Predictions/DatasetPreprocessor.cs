@@ -65,7 +65,6 @@ public class DatasetPreprocessor : MonoBehaviour
 
     private string[] RemoveTarget(string[] values)
     {
-        //Debug.Log("Removing target values");
         string[] processed = new string[values.Length-10];
         int counter = 0;
         for(int i = 0; i < values.Length; i++)
@@ -75,25 +74,7 @@ public class DatasetPreprocessor : MonoBehaviour
                 processed[counter] = values[i];
                 counter++;
             }
-            //else
-            //{
-            //    Debug.Log(values[i]);
-            //}
         }
         return processed;
-    }
-
-    public float[] ExtractFmsWindow(float[] fmsSequence)
-    {
-        float time = manager.GetExperimentTime();
-        if (testing)
-        {
-            time = testingTime;
-        }
-        int fmsWindowEnd = Mathf.RoundToInt(time)*2; //Times 2, because the fms is taken every 0.5 seconds.
-        int fmsWindowStart = fmsWindowEnd - 10; // To cover 5 seconds, 10 entries have to be considered
-        float[] fmsWindow = new float[10];
-        Array.Copy(fmsSequence, fmsWindowStart, fmsWindow, 0, 10 );
-        return fmsWindow;
     }
 }
