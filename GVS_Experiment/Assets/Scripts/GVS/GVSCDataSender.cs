@@ -33,8 +33,17 @@ public class GVSCDataSender : MonoBehaviour
     [SerializeField]
     private bool isNoisy = false;
 
-    public bool rotationIsSending;
-    public bool accIsSending;
+    [SerializeField]
+    private bool rotationIsSending;
+    [SerializeField]
+    private bool accIsSending;
+    [SerializeField]
+    private bool isTesting = false;
+    [SerializeField]
+    private bool isManual = true;
+    [SerializeField]
+    private bool logEvents = false;
+
 
     //Serial Port Fields
     [SerializeField]
@@ -73,8 +82,14 @@ public class GVSCDataSender : MonoBehaviour
 
     private float timer = 1;
 
-    private NoisyGVS NoisyGVS = new NoisyGVS();
+    private NoisyGVS noisyGVS = new NoisyGVS();
 
+    private void Awake()
+    {
+        isSham = false;
+        isDirectional = false;
+        isNoisy = true;
+    }
     void Start()
     {
         UnitySerialPort.Instance.ComPort = ComPort;
@@ -105,7 +120,6 @@ public class GVSCDataSender : MonoBehaviour
         // Subscribe to the SerialDataParseEvent
         UnitySerialPort.SerialDataParseEvent += ParseMessage;
 
-        //StartCoroutine(ZeroAllAfterTime());
     }
 
     private void OnSerialPortOpen()
@@ -138,45 +152,51 @@ public class GVSCDataSender : MonoBehaviour
         if (Input.GetKeyUp(KeyCode.Alpha2))
         {
             SetModeDirect();
-            if(isNoisy)
-                SetupNoisyGVS();
         }
-        if (Input.GetKeyUp(KeyCode.Alpha3))
+        if (Input.GetKeyUp(KeyCode.N))
         {
-            TriggerGVSLateral(maxMiliAmpere);
+            SetupNoisyGVS();
         }
-        if (Input.GetKeyUp(KeyCode.Alpha4))
-        {
-            TriggerGVSLateral(-maxMiliAmpere);
-        }
-        if (Input.GetKeyUp(KeyCode.Alpha5))
-        {
-            TriggerGVSRoll(maxMiliAmpere);
-        }
-        if (Input.GetKeyUp(KeyCode.Alpha6))
-        {
-            TriggerGVSRoll(-maxMiliAmpere);
-        }
-        if (Input.GetKeyUp(KeyCode.Alpha7))
-        {
-            TriggerGVSYaw(maxMiliAmpere);
-        }
-        if (Input.GetKeyUp(KeyCode.Alpha8))
-        {
-            TriggerGVSYaw(-maxMiliAmpere);
-        }
+        // Important selections
+        // Zero all
         if (Input.GetKeyUp(KeyCode.Alpha9))
         {
             TriggerGVSYaw(0f);
             ZeroAllElectrodes();
         }
+        // Killswitch
         if (Input.GetKeyUp(KeyCode.Alpha0))
         {
             KillSwitch();
         }
-        if (Input.GetKeyUp(KeyCode.N))
+        if (isManual)
         {
-            SetupNoisyGVS();
+            // Test inputs
+            if (Input.GetKeyUp(KeyCode.Alpha3))
+            {
+                TriggerGVSLateral(maxMiliAmpere);
+            }
+            if (Input.GetKeyUp(KeyCode.Alpha4))
+            {
+                TriggerGVSLateral(-maxMiliAmpere);
+            }
+            if (Input.GetKeyUp(KeyCode.Alpha5))
+            {
+                TriggerGVSRoll(maxMiliAmpere);
+            }
+            if (Input.GetKeyUp(KeyCode.Alpha6))
+            {
+                TriggerGVSRoll(-maxMiliAmpere);
+            }
+            if (Input.GetKeyUp(KeyCode.Alpha7))
+            {
+                TriggerGVSYaw(maxMiliAmpere);
+            }
+            if (Input.GetKeyUp(KeyCode.Alpha8))
+            {
+                TriggerGVSYaw(-maxMiliAmpere);
+            }
+
         }
     }
     private void OnEnable()
@@ -309,7 +329,9 @@ public class GVSCDataSender : MonoBehaviour
         isAccelerating = keepAcceleration;
     }
 
-    private float lastAngular, lastLinear = 0; 
+    private float lastAngular, lastLinear = 0;
+
+    public NoisyGVS NoisyGVS { get => noisyGVS; set => noisyGVS = value; }
 
     public float NormalizeValues(float sum)
     {
@@ -484,7 +506,7 @@ public class GVSCDataSender : MonoBehaviour
             if (i < messageData.Length - 2)
                 body += " ";
         }
-        Debug.Log("Message from GVS: " + checkedMessage);
+        if(logEvents) Debug.Log("Message from GVS: " + checkedMessage);
 
         string[] messageWithoutHead = body.Split(new[] { " " }, StringSplitOptions.RemoveEmptyEntries);
 
@@ -879,17 +901,24 @@ public class GVSCDataSender : MonoBehaviour
         if (isNoisy)
         {
             float[] values = NoisyGVS.GetNextCurrents();
-            SetElectrode(1, values[0]);
-            SetElectrode(2, values[1]);
-            SetElectrode(3, values[2]);
-            SetElectrode(4, values[3]);
+            if(logEvents) Debug.Log("First value: " + values[0]);
+            if (!isTesting && !isManual)
+            {
+                SetElectrode(1, values[0]);
+                SetElectrode(2, values[1]);
+                SetElectrode(3, values[2]);
+                SetElectrode(4, values[3]);
+            }
         }
     }
     private IEnumerator SendNoisySignal()
     {
-        yield return new WaitUntil(() => (isPortConnected && accIsSending && rotationIsSending));
-        while (isNoisy)
+        yield return new WaitUntil(() => ((isPortConnected && !isManual) || isTesting));
+        while (true)
         {
+            if (!isNoisy)
+                ZeroAllElectrodes();
+            yield return new WaitUntil(() => (isNoisy));
             yield return new WaitForSecondsRealtime(0.05f);
             TriggerNoisyGVS();
         }

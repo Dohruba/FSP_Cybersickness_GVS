@@ -53,6 +53,8 @@ MonoBehaviour:
   isNoisy: 1
   rotationIsSending: 1
   accIsSending: 1
+  isTesting: 0
+  isManual: 1
   ComPort: COM3
   BaudRate: 9600
   Parity: 0

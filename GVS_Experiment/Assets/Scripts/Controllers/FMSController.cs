@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using static Unity.Burst.Intrinsics.X86;
 
 public class FMSController : MonoBehaviour
 {
@@ -8,6 +9,16 @@ public class FMSController : MonoBehaviour
     public InputActionAsset inputActions;
     public InputAction rightJoystickAction;
     public InputAction leftJoystickAction;
+
+    [Header("GVS parameters")]
+    [SerializeField]
+    private int triggerFms = 5;
+    [SerializeField]
+    private GVSCDataSender gVSCDataSender;
+    [SerializeField]
+    private float speed = 1;
+    public float currentGvsStrength = 0;
+
 
     void OnEnable()
     {
@@ -38,7 +49,15 @@ public class FMSController : MonoBehaviour
         {
             FMSTracker.DecreaseFMS();
         }
-    }
+        if (FMSTracker.GetCurrentFMS() >= 5 && gVSCDataSender.NoisyGVS.Interpolator < 1)
+        {
+            currentGvsStrength = gVSCDataSender.NoisyGVS.ActivateNoisyGVS(Time.deltaTime * speed);
+        }
+        if (FMSTracker.GetCurrentFMS() < 5 && gVSCDataSender.NoisyGVS.Interpolator > 0)
+        {
+            currentGvsStrength = gVSCDataSender.NoisyGVS.DectivateNoisyGVS(Time.deltaTime * speed);
+        }
+}
     private void OnRightButtonPressed(InputAction.CallbackContext context)
     {
         FMSTracker.IncreaseFMS();
