@@ -41,11 +41,11 @@ public class FMSController : MonoBehaviour
     }
     private void OnRightButtonPressed(InputAction.CallbackContext context)
     {
-        Debug.Log("A Button Pressed!");
+        FMSTracker.IncreaseFMS();
     }
 
     private void OnLeftButtonPressed(InputAction.CallbackContext context)
     {
-        Debug.Log("X Button Pressed!");
+        FMSTracker.DecreaseFMS();
     }
 }
