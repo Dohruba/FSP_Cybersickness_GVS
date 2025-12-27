@@ -49,7 +49,7 @@ public class DataRecorder : MonoBehaviour
         data[10] = experimentManager.Age;
     }
 
-    public void RecordMovementFmsData(List<string> data)
+    public void RecordMovementFmsData()
     {
         string path = Path.Combine(filePath, $"{experimentManager.GenerateFileName()}.csv");
         CurrentEntry = GenerateEntry();
@@ -57,7 +57,7 @@ public class DataRecorder : MonoBehaviour
         buffer.Add(CurrentEntry);
         if (buffer.Count > 10)
             buffer.RemoveAt(0);
-        Debug.Log("Ttest");
+        //Debug.Log("Test");
     }
 
     public void RecordActualVsPredictedFMS()
@@ -122,7 +122,7 @@ public class DataRecorder : MonoBehaviour
     {
         while (experimentManager.ExperimentRunning)
         {
-            RecordMovementFmsData(buffer);
+            RecordMovementFmsData();
             predictionsClient.PredictFromCSV(GetBuffer());
             RecordActualVsPredictedFMS();
             yield return new WaitForSeconds(recordingInterval);

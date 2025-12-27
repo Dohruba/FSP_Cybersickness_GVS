@@ -12,16 +12,23 @@ public class FMSTracker : MonoBehaviour
 {
     [SerializeField]
     private UIManager uiManager;
+    [SerializeField]
+    private ExperimentManager experimentManager;
+    [SerializeField]
+    private ExternalModelCLientNoFMS experimentCLientNoFMS;
 
     [SerializeField]
-    private int fms = 0;
+    private int userFms = 0;
+    [SerializeField]
+    private float predictedFms = 0;
     private int upperLimit = 20;
     private int lowerLimit = 0;
 
 
-    public int GetCurrentFMS()
+    public float GetCurrentFMS()
     {
-        return fms;
+        float userFmsFloat = userFms;
+        return experimentManager.IsGvsUserControlled ? userFmsFloat : predictedFms;
     }
     public void IncreaseFMS()
     {
@@ -34,12 +41,16 @@ public class FMSTracker : MonoBehaviour
 
     private void UpdateFMS(int change)
     {
-        if ((change > 0 && fms < upperLimit) || (change < 0 && fms > lowerLimit))
+        if ((change > 0 && userFms < upperLimit) || (change < 0 && userFms > lowerLimit))
         {
-            fms += change;
+            userFms += change;
             if(uiManager != null) 
-                uiManager.UpdateFMS(fms);
+                uiManager.UpdateFMS(userFms);
         }
+    }
+    private void Update()
+    {
+        predictedFms = experimentCLientNoFMS.GetPredictedFMS();
     }
 
 }

@@ -48,7 +48,6 @@ public class LevelsManager : MonoBehaviour
         playerRig.rotation = startingPoint.rotation;
         if (_currentLevelIndex >= levels.Count - 1)
         {
-            Debug.Log("All levels completed!");
             return;
         }
 
@@ -68,10 +67,9 @@ public class LevelsManager : MonoBehaviour
 
     void EndLevel()
     {
-        string line = $"Level {_currentLevelIndex + 1} Results:\n" +
-                $"Coins Collected: {_coinsCollected}/{_totalCoinsInLevel}\n" +
-                $"Time Remaining: {Mathf.FloorToInt(_timeRemaining)}s\n";
-        Debug.Log(line);
+        string line = $"{_currentLevelIndex + 1}," +
+                $"{_coinsCollected}/{_totalCoinsInLevel}," +
+                $"{Mathf.FloorToInt(_timeRemaining)}";
         _recorder.RecordLevelMetrics(line);
         StartNextLevel();
     }

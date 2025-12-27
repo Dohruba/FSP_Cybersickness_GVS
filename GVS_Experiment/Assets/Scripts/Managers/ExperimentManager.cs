@@ -13,7 +13,7 @@ public class ExperimentManager : MonoBehaviour
     [SerializeField]
     private string experimentDate = string.Empty;
     [SerializeField]
-    private string experimentVersion = string.Empty;
+    private bool isGvsUserControlled = true;
     private string identificator;
     [SerializeField]
     private bool experimentRunning;
@@ -21,6 +21,8 @@ public class ExperimentManager : MonoBehaviour
     private float startTime = 0f;
     [SerializeField]
     private float predictedFms = 0;
+    [SerializeField]
+    private string path = "";
     
     [Header("Participant Information")]
     [SerializeField]
@@ -36,6 +38,16 @@ public class ExperimentManager : MonoBehaviour
     [SerializeField]
     private DataRecorder dataRecorder;
 
+    [Header("GVS Controller")]
+    [SerializeField] 
+    private GVSCDataSender GVSCDataSender;
+    [SerializeField]
+    private bool isTesting = false;
+    [SerializeField]
+    private bool isManual = true;
+    [SerializeField]
+    private bool logEvents = false;
+
     // Getters
     public string Gender { get => gender; set => gender = value; }
     public string Age { get => age; set => age = value; }
@@ -43,12 +55,14 @@ public class ExperimentManager : MonoBehaviour
     public string Identificator { get => identificator; set => identificator = value; }
     public float PredictedFms { get => predictedFms; set => predictedFms = value; }
     public bool ExperimentRunning { get => experimentRunning; set => experimentRunning = value; }
+    public bool IsGvsUserControlled { get => isGvsUserControlled; set => isGvsUserControlled = value; }
 
     private void Awake()
     {
+        gender = gender == "f" ? "0" : "1";
+        experimentDate = DateTime.Now.ToShortDateString().Replace('/','-');
         Identificator = GenerateFileName();
         Debug.Log(Identificator.ToString());
-        gender = gender == "f" ? "0" : "1";
     }
 
     private void Update()
@@ -64,6 +78,10 @@ public class ExperimentManager : MonoBehaviour
             StopExperiment();
             Identificator = GenerateFileName();
         }
+        GVSCDataSender.IsTesting = isTesting;
+        GVSCDataSender.IsManual = isManual;
+        GVSCDataSender.LogEvents = logEvents;
+
     }
     public void StartExperiment()
     {
@@ -104,7 +122,8 @@ public class ExperimentManager : MonoBehaviour
 
     public string GenerateFileName()
     {
-        return "V-" + experimentVersion + "_D-" + experimentDate + "_id-" + experimentId;
+        path = "V_" + (IsGvsUserControlled ? "user" : "pred") + " D_" + experimentDate + " id_" + experimentId;
+        return path;
     }
 
     public float GetExperimentTime()

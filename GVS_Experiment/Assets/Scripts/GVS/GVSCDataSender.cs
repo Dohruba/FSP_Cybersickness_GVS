@@ -169,7 +169,7 @@ public class GVSCDataSender : MonoBehaviour
         {
             KillSwitch();
         }
-        if (isManual)
+        if (IsManual)
         {
             // Test inputs
             if (Input.GetKeyUp(KeyCode.Alpha3))
@@ -332,6 +332,9 @@ public class GVSCDataSender : MonoBehaviour
     private float lastAngular, lastLinear = 0;
 
     public NoisyGVS NoisyGVS { get => noisyGVS; set => noisyGVS = value; }
+    public bool IsManual { get => isManual; set => isManual = value; }
+    public bool LogEvents { get => logEvents; set => logEvents = value; }
+    public bool IsTesting { get => isTesting; set => isTesting = value; }
 
     public float NormalizeValues(float sum)
     {
@@ -506,7 +509,7 @@ public class GVSCDataSender : MonoBehaviour
             if (i < messageData.Length - 2)
                 body += " ";
         }
-        if(logEvents) Debug.Log("Message from GVS: " + checkedMessage);
+        if(LogEvents && !isNoisy) Debug.Log("Message from GVS: " + checkedMessage);
 
         string[] messageWithoutHead = body.Split(new[] { " " }, StringSplitOptions.RemoveEmptyEntries);
 
@@ -901,8 +904,8 @@ public class GVSCDataSender : MonoBehaviour
         if (isNoisy)
         {
             float[] values = NoisyGVS.GetNextCurrents();
-            if(logEvents) Debug.Log("First value: " + values[0]);
-            if (!isTesting && !isManual)
+            if(LogEvents) Debug.Log("First value: " + values[0]);
+            if (!IsTesting && !IsManual)
             {
                 SetElectrode(1, values[0]);
                 SetElectrode(2, values[1]);
@@ -913,13 +916,13 @@ public class GVSCDataSender : MonoBehaviour
     }
     private IEnumerator SendNoisySignal()
     {
-        yield return new WaitUntil(() => ((isPortConnected && !isManual) || isTesting));
+        yield return new WaitUntil(() => ((isPortConnected && !IsManual) || IsTesting));
         while (true)
         {
-            if (!isNoisy)
+            if (!isNoisy || isManual)
                 ZeroAllElectrodes();
-            yield return new WaitUntil(() => (isNoisy));
-            yield return new WaitForSecondsRealtime(0.05f);
+            yield return new WaitUntil(() => (isNoisy && !isManual));
+            yield return new WaitForSecondsRealtime(0.1f);
             TriggerNoisyGVS();
         }
     }

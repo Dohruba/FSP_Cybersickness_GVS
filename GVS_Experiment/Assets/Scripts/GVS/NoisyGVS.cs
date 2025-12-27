@@ -31,7 +31,6 @@ namespace Assets.Scripts.GVS
             values[2] = -1 * values[0];
             values[1] = direction;
             values[3] = -1* values[1];
-            Debug.Log(values[0]);
             return values;
         }
 
