@@ -57,7 +57,6 @@ public class DataRecorder : MonoBehaviour
         buffer.Add(CurrentEntry);
         if (buffer.Count > 10)
             buffer.RemoveAt(0);
-        //Debug.Log("Test");
     }
 
     public void RecordActualVsPredictedFMS()

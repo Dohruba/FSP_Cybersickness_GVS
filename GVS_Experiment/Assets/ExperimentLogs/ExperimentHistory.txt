@@ -13,3 +13,12 @@
 [2025-12-28 00:04:44] Experiment #13: EXP_013
 [2025-12-28 00:12:02] Experiment #14: EXP_014
 [2025-12-28 00:14:20] Experiment #15: EXP_015
+[2025-12-28 14:16:12] Experiment #16: EXP_016
+[2025-12-28 14:17:06] Experiment #17: EXP_017
+[2025-12-28 14:18:19] Experiment #18: EXP_018
+[2025-12-28 14:46:58] Experiment #19: EXP_019
+[2025-12-28 14:47:33] Experiment #20: EXP_020
+[2025-12-28 14:50:08] Experiment #21: EXP_021
+[2025-12-28 15:01:46] Experiment #22: EXP_022
+[2025-12-28 15:08:34] Experiment #23: EXP_023
+[2025-12-28 17:12:58] Experiment #24: EXP_024

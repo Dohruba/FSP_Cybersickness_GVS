@@ -148,7 +148,7 @@ public class GVSCDataSender : MonoBehaviour
         Debug.Log("Calibration mode initalized...");
         Debug.Log($"<color=red> Remember to set Age, Gender and MSSQ</color>");
         Debug.Log($"<color=red> Remember to set Max Mili Ampere</color>");
-        Debug.Log($"<color=green> Starting Experiment: To start noisy signals, UNTICK MANUAL MODE</color>");
+        Debug.Log($"<color=green> Starting Experiment: To start experiment, move forward or untick isManual</color>");
         
     }
 
@@ -908,7 +908,6 @@ public class GVSCDataSender : MonoBehaviour
         if (isNoisy)
         {
             float[] values = NoisyGVS.GetNextCurrents();
-            if(LogEvents) Debug.Log("First value: " + values[0]);
             if (!IsTesting && !IsManual)
             {
                 SetElectrode(1, values[0]);

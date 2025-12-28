@@ -97,16 +97,17 @@ public class ExperimentManager : MonoBehaviour
             StopExperiment();
             Identificator = GenerateFileName();
         }
+        // Pass values for general control
         GVSCDataSender.IsTesting = isTesting;
         GVSCDataSender.IsManual = IsManual;
         GVSCDataSender.LogEvents = logEvents;
         GVSCDataSender.MaxMiliAmpere = gvsMiliAmpere < 2.5f ? gvsMiliAmpere : 2.5f;
         dynamicMoveProvider.moveSpeed = speed;
         smoothRotation.rotationSpeed = rotSpeed;
+        // Retrieve values for general overview
         actualFMS = fmsTracker.UserFms;
         predictedFms = fmsTracker.PredictedFms;
         interpolator = GVSCDataSender.interpolatorValue;
-
     }
     public void StartExperiment()
     {
