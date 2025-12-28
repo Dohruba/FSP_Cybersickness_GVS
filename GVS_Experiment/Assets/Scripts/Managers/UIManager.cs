@@ -20,12 +20,12 @@ public class UIManager : MonoBehaviour
     public void AddCoin()
     {
         coinCount++;
-        coinText.text = $" {coinCount}";
+        coinText.text = $"Coins: {coinCount}";
     }
     public void UpdateCoinText(int count)
     {
         coinCount = count;
-        coinText.text = $"{count}";
+        coinText.text = $"Coins: {count}";
     }
     public void UpdateTimer(float timeRemaining)
     {
@@ -35,6 +35,6 @@ public class UIManager : MonoBehaviour
     }
     public void UpdateFMS(int fms)
     {
-        FMSText.text = fms.ToString();
+        FMSText.text = "FMS: " + fms.ToString();
     }
 }

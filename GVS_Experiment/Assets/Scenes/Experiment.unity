@@ -1551,11 +1551,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 658675834882647070, guid: 42276bb1616eea84bbf2c6e1ae81bc93, type: 3}
       propertyPath: age
-      value: 29
+      value: 30
       objectReference: {fileID: 0}
     - target: {fileID: 658675834882647070, guid: 42276bb1616eea84bbf2c6e1ae81bc93, type: 3}
       propertyPath: mssq
-      value: 111
+      value: 15.375
       objectReference: {fileID: 0}
     - target: {fileID: 658675834882647070, guid: 42276bb1616eea84bbf2c6e1ae81bc93, type: 3}
       propertyPath: speed
@@ -1563,7 +1563,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 658675834882647070, guid: 42276bb1616eea84bbf2c6e1ae81bc93, type: 3}
       propertyPath: gender
-      value: m
+      value: f
       objectReference: {fileID: 0}
     - target: {fileID: 658675834882647070, guid: 42276bb1616eea84bbf2c6e1ae81bc93, type: 3}
       propertyPath: isManual
@@ -1615,7 +1615,7 @@ PrefabInstance:
       objectReference: {fileID: 153982005869241620}
     - target: {fileID: 658675834882647070, guid: 42276bb1616eea84bbf2c6e1ae81bc93, type: 3}
       propertyPath: isGvsUserControlled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 658675834882647070, guid: 42276bb1616eea84bbf2c6e1ae81bc93, type: 3}
       propertyPath: 'trackers.Array.data[0]'
@@ -1686,9 +1686,21 @@ PrefabInstance:
       propertyPath: near clip plane
       value: 0.01
       objectReference: {fileID: 0}
+    - target: {fileID: 451230154146054057, guid: 89a5b272e15cc3d40ad23ed0a8d5e7ca, type: 3}
+      propertyPath: m_text
+      value: 'FMS: 0'
+      objectReference: {fileID: 0}
+    - target: {fileID: 907310123244385178, guid: 89a5b272e15cc3d40ad23ed0a8d5e7ca, type: 3}
+      propertyPath: m_text
+      value: 00:00
+      objectReference: {fileID: 0}
     - target: {fileID: 2078058902695816329, guid: 89a5b272e15cc3d40ad23ed0a8d5e7ca, type: 3}
       propertyPath: m_Name
       value: XR Origin (XR Rig)
+      objectReference: {fileID: 0}
+    - target: {fileID: 2878137191053524212, guid: 89a5b272e15cc3d40ad23ed0a8d5e7ca, type: 3}
+      propertyPath: m_text
+      value: 'Coins: 0'
       objectReference: {fileID: 0}
     - target: {fileID: 4470585219220986396, guid: 89a5b272e15cc3d40ad23ed0a8d5e7ca, type: 3}
       propertyPath: m_LocalPosition.x
