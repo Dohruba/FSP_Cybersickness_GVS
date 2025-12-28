@@ -2,7 +2,6 @@ using UnityEngine;
 
 public class CoinController : MonoBehaviour
 {
-    private int value = 1;
     [SerializeField]
     private float speed = 1;
 

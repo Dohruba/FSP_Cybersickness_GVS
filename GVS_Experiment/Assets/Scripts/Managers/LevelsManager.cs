@@ -15,6 +15,10 @@ public class LevelsManager : MonoBehaviour
     private int _totalCoinsInLevel;
     private int _initalTime = 60;
 
+    [SerializeField]
+    private DataRecorder _recorder;
+    [SerializeField] private ExperimentManager _experimentManager;
+
 
     void Start()
     {
@@ -45,7 +49,7 @@ public class LevelsManager : MonoBehaviour
         playerRig.rotation = startingPoint.rotation;
         if (_currentLevelIndex >= levels.Count - 1)
         {
-            Debug.Log("All levels completed!");
+            _experimentManager.StopExperiment();
             return;
         }
 
@@ -65,11 +69,10 @@ public class LevelsManager : MonoBehaviour
 
     void EndLevel()
     {
-        string line = $"Level {_currentLevelIndex + 1} Results:\n" +
-                $"Coins Collected: {_coinsCollected}/{_totalCoinsInLevel}\n" +
-                $"Time Remaining: {Mathf.FloorToInt(_timeRemaining)}s\n";
-        Debug.Log(line);
-        DataRecorder.RecordLevelMetrics(line);
+        string line = $"{_currentLevelIndex + 1}," +
+                $"{_coinsCollected}/{_totalCoinsInLevel}," +
+                $"{Mathf.FloorToInt(_timeRemaining)}\n";
+        _recorder.RecordLevelMetrics(line);
         StartNextLevel();
     }
     public static void CollectCoin()

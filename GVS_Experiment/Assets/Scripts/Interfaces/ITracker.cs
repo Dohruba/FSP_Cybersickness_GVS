@@ -5,11 +5,11 @@ using UnityEngine;
 public interface ITracker
 {
     void Track();
-    bool IsRecording();
-    void StopRecording();
-    void StartRecording();
+    bool IsTracking();
+    void StopTracking();
+    void StartTracking();
 
-    void Subscribe(Action<List<string>> subscriber);
-    void Unsubscribe(Action<List<string>> subscriber);
+    void Subscribe(Action<Vector3> subscriber);
+    void Unsubscribe(Action<Vector3> subscriber);
     void TriggerStringListeners();
 }

@@ -130,7 +130,7 @@ public class UnitySerialPort : MonoBehaviour
     public TMP_Text StatusMsgBox;
 
     private byte[] LastMessage = new byte[256]; // Buffer for the last message
-    private int LastMessageLength = 0;
+    //private int LastMessageLength = 0;
 
 
     // public TMP_InputField OutputString;

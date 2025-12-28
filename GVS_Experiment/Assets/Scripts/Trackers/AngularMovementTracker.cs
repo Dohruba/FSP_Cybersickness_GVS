@@ -10,47 +10,27 @@ public class AngularMovementTracker : TrackerBase
     public Transform headTransform;
     private Quaternion previousRotation;
     private Quaternion currentRotation;
-    private Vector3 previousAngularVelocity;
     private Vector3 currentAngularVelocity;
-    private Vector3 angularAcceleration;
-    private Vector3 smoothedAngularAcceleration;
-    private float angularSpeed;
+    private Vector3 smoothedAngularVelocity;
+
     [SerializeField]
     private bool isRecording = false;
-    private List<string> data;
-    private string fileName = "AngularMovement";
-    private string fileHeaders = "id,s,deg/s,deg/s^2,x,y,z";
-    private int batchSize = 1000;
-    private string id;
     public float maxSpeed = 6;
-    public float maxAcc = 60;
 
     // Moving average filter variables
-    private List<Vector3> accelerationHistory = new List<Vector3>();
+    private List<Vector3> velocityHistory = new List<Vector3>();
     public int smoothingWindow = 30; // Adjust this value for stronger or weaker smoothing
 
-    private event Action<List<string>> OnTracked;
+    private event Action<Vector3> OnTracked;
 
     private void Start()
     {
-        id = ExperimentManager.GetGuid();
-        data = new List<string>();
         previousRotation = headTransform.rotation;
-        previousAngularVelocity = Vector3.zero;
-        data.Add(fileName);
-        data.Add(fileHeaders);
     }
 
     private void FixedUpdate()
     {
-        if (isRecording)
-        {
-            Track();
-            if (data.Count > batchSize) // +1 for the fileName
-            {
-                TriggerStringListeners();
-            }
-        }
+        Track();
     }
 
     // Track angular movement
@@ -58,48 +38,47 @@ public class AngularMovementTracker : TrackerBase
     {
         currentRotation = headTransform.localRotation;
         currentAngularVelocity = CalculateAngularVelocity(previousRotation, currentRotation, Time.deltaTime);
-        angularSpeed = currentAngularVelocity.magnitude;
-        if(angularSpeed > maxSpeed) return; // Block excessively big values
-        angularAcceleration = (currentAngularVelocity - previousAngularVelocity) / Mathf.Max(Time.deltaTime, 0.0001f);
-        // Apply moving average filter to angular acceleration
-        smoothedAngularAcceleration = SmoothWithMovingAverage(angularAcceleration);
-        if(Mathf.Abs(smoothedAngularAcceleration.y) > maxAcc) return;
 
-        string line = $"{id},{Time.time:F4},{angularSpeed:F4},{smoothedAngularAcceleration.magnitude:F4}" +
-                  $",{smoothedAngularAcceleration.x:F4},{smoothedAngularAcceleration.y:F4},{smoothedAngularAcceleration.z:F4}";
-        data.Add(line);
+        // Apply moving average filter to angular velocity
+        smoothedAngularVelocity = SmoothWithMovingAverage(currentAngularVelocity);
 
         previousRotation = currentRotation;
-        previousAngularVelocity = currentAngularVelocity;
     }
 
-    public override void StopRecording()
+    // Public getter for current smoothed angular velocity
+    public Vector3 GetAngularVelocity()
     {
-        // Ensure any remaining data is saved
-        if (data.Count > 1)
-        {
-            TriggerStringListeners();
-        }
+        return smoothedAngularVelocity;
+    }
+
+    // Public getter for angular speed (magnitude)
+    public float GetAngularSpeed()
+    {
+        return smoothedAngularVelocity.magnitude;
+    }
+
+    public override void StopTracking()
+    {
         isRecording = false;
     }
 
-    public override bool IsRecording()
+    public override bool IsTracking()
     {
         return isRecording;
     }
 
-    public override void StartRecording()
+    public override void StartTracking()
     {
         isRecording = true;
     }
 
-    public override void Subscribe(Action<List<string>> subscriber)
+    public override void Subscribe(Action<Vector3> subscriber)
     {
         Debug.Log("Subscribing...");
         OnTracked += subscriber;
     }
 
-    public override void Unsubscribe(Action<List<string>> subscriber)
+    public override void Unsubscribe(Action<Vector3> subscriber)
     {
         OnTracked -= subscriber;
     }
@@ -107,10 +86,7 @@ public class AngularMovementTracker : TrackerBase
     public override void TriggerStringListeners()
     {
         Debug.Log("TriggerListeners...");
-        OnTracked?.Invoke(new List<string>(data));
-        data = new List<string>();
-        data.Add(fileName);
-        data.Add(fileHeaders);
+        OnTracked?.Invoke(smoothedAngularVelocity);
     }
 
     // Calculate angular velocity
@@ -125,24 +101,24 @@ public class AngularMovementTracker : TrackerBase
         return axis * (angle * Mathf.Deg2Rad / deltaTime);
     }
 
-    // Moving average filter for angular acceleration
-    private Vector3 SmoothWithMovingAverage(Vector3 currentAcceleration)
+    // Moving average filter for angular velocity
+    private Vector3 SmoothWithMovingAverage(Vector3 currentVelocity)
     {
-        accelerationHistory.Add(currentAcceleration);
+        velocityHistory.Add(currentVelocity);
 
         // Maintain the history size
-        if (accelerationHistory.Count > smoothingWindow)
+        if (velocityHistory.Count > smoothingWindow)
         {
-            accelerationHistory.RemoveAt(0);
+            velocityHistory.RemoveAt(0);
         }
 
         // Calculate the moving average
-        Vector3 smoothedAcceleration = Vector3.zero;
-        foreach (Vector3 acceleration in accelerationHistory)
+        Vector3 smoothedVelocity = Vector3.zero;
+        foreach (Vector3 velocity in velocityHistory)
         {
-            smoothedAcceleration += acceleration;
+            smoothedVelocity += velocity;
         }
 
-        return smoothedAcceleration / accelerationHistory.Count;
+        return smoothedVelocity / velocityHistory.Count;
     }
 }

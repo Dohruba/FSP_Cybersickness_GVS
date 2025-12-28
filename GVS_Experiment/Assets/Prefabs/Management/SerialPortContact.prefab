@@ -1,0 +1,98 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &5541436891608639939
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7112532126673107351}
+  - component: {fileID: 8822085231605544121}
+  - component: {fileID: 2031980433212498592}
+  m_Layer: 0
+  m_Name: SerialPortContact
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7112532126673107351
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5541436891608639939}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8822085231605544121
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5541436891608639939}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 17251abef67bb564fa56a64bfce38cd6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  gvsInfluencers:
+  - {fileID: 0}
+  rotator: {fileID: 0}
+  isSham: 0
+  isDirectional: 0
+  isNoisy: 1
+  rotationIsSending: 1
+  accIsSending: 1
+  isTesting: 0
+  isManual: 1
+  ComPort: COM3
+  BaudRate: 9600
+  Parity: 0
+  StopBits: 1
+  DataBits: 8
+  WriteTimeout: 50
+  GVSmode: 4
+  isLine: 0
+  maxMiliAmpere: 0.8
+--- !u!114 &2031980433212498592
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5541436891608639939}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4b2f7de49d5edb141902cff5c7e63bfc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ComPort: COM5
+  BaudRate: 9600
+  Parity: 0
+  StopBits: 1
+  DataBits: 8
+  DtrEnable: 0
+  RtsEnable: 0
+  ReadTimeout: 10
+  WriteTimeout: 10
+  IsPortInitalized: 0
+  ComStatusText: {fileID: 0}
+  RawDataText: {fileID: 0}
+  StatusMsgBox: {fileID: 0}
+  LoopMethod: 0
+  OpenPortOnStart: 0
+  ShowDebugs: 1
+  ComPorts: []
+  ReadDataMethod: 0
+  Delimiter: 
+  Separator: 45
