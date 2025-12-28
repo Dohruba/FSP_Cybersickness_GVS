@@ -615,7 +615,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6598815579406187037, guid: 18ddb545287c546e19cc77dc9fbb2189, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1551,11 +1551,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 658675834882647070, guid: 42276bb1616eea84bbf2c6e1ae81bc93, type: 3}
       propertyPath: age
-      value: 21
+      value: 29
       objectReference: {fileID: 0}
     - target: {fileID: 658675834882647070, guid: 42276bb1616eea84bbf2c6e1ae81bc93, type: 3}
       propertyPath: mssq
-      value: 21
+      value: 111
       objectReference: {fileID: 0}
     - target: {fileID: 658675834882647070, guid: 42276bb1616eea84bbf2c6e1ae81bc93, type: 3}
       propertyPath: speed
@@ -1563,7 +1563,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 658675834882647070, guid: 42276bb1616eea84bbf2c6e1ae81bc93, type: 3}
       propertyPath: gender
-      value: f
+      value: m
       objectReference: {fileID: 0}
     - target: {fileID: 658675834882647070, guid: 42276bb1616eea84bbf2c6e1ae81bc93, type: 3}
       propertyPath: isManual
@@ -1575,7 +1575,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 658675834882647070, guid: 42276bb1616eea84bbf2c6e1ae81bc93, type: 3}
       propertyPath: logEvents
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 658675834882647070, guid: 42276bb1616eea84bbf2c6e1ae81bc93, type: 3}
       propertyPath: fmsTracker
@@ -1588,6 +1588,10 @@ PrefabInstance:
     - target: {fileID: 658675834882647070, guid: 42276bb1616eea84bbf2c6e1ae81bc93, type: 3}
       propertyPath: experimentId
       value: '-'
+      objectReference: {fileID: 0}
+    - target: {fileID: 658675834882647070, guid: 42276bb1616eea84bbf2c6e1ae81bc93, type: 3}
+      propertyPath: gvsMiliAmpere
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 658675834882647070, guid: 42276bb1616eea84bbf2c6e1ae81bc93, type: 3}
       propertyPath: GVSCDataSender
@@ -1609,6 +1613,10 @@ PrefabInstance:
       propertyPath: dynamicMoveProvider
       value: 
       objectReference: {fileID: 153982005869241620}
+    - target: {fileID: 658675834882647070, guid: 42276bb1616eea84bbf2c6e1ae81bc93, type: 3}
+      propertyPath: isGvsUserControlled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 658675834882647070, guid: 42276bb1616eea84bbf2c6e1ae81bc93, type: 3}
       propertyPath: 'trackers.Array.data[0]'
       value: 
